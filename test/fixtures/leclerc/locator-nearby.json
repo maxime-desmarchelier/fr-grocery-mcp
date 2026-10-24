@@ -1,0 +1,142 @@
+{
+  "points": [
+    {
+      "coordinates": {
+        "latitude": 0.0,
+        "longitude": 0.0
+      },
+      "deliveryAreas": [
+        "00000"
+      ],
+      "distance": 0.1,
+      "mapPointId": 1149,
+      "name": "Testville Centre",
+      "noPL": "123456",
+      "noPR": "123456",
+      "postalCode": "00000",
+      "state": 0,
+      "homeDeliveryState": 1,
+      "type": 1,
+      "serviceType": "drive",
+      "numSilo": "3",
+      "urlSiteCourse": "https://fd7-courses.leclercdrive.fr/magasin-123456-123456-testville-centre.aspx",
+      "urlBase": "https://fd7-m.leclercdrive.fr/123456-123456/",
+      "urlFicheMagasin": "https://www.leclercdrive.fr/region-region-test/ville-test/drive-testville-centre.aspx?external=1"
+    },
+    {
+      "coordinates": {
+        "latitude": 0.0,
+        "longitude": 0.0
+      },
+      "deliveryAreas": [
+        "00000"
+      ],
+      "distance": 0.2,
+      "mapPointId": 1294,
+      "name": "Testville North",
+      "noPL": "123457",
+      "noPR": "123457",
+      "postalCode": "00000",
+      "state": 0,
+      "homeDeliveryState": 1,
+      "type": 1,
+      "serviceType": "drive",
+      "numSilo": "3",
+      "urlSiteCourse": "https://fd7-courses.leclercdrive.fr/magasin-123457-123457-testville-north.aspx",
+      "urlBase": "https://fd7-m.leclercdrive.fr/123457-123457/",
+      "urlFicheMagasin": "https://www.leclercdrive.fr/region-region-test/testville/drive-testville-north.aspx?external=1"
+    },
+    {
+      "coordinates": {
+        "latitude": 0.0,
+        "longitude": 0.0
+      },
+      "deliveryAreas": [
+        "00000"
+      ],
+      "distance": 0.3,
+      "mapPointId": 1213,
+      "name": "Relais Un",
+      "noPL": "123459",
+      "noPR": "000582",
+      "postalCode": "00000",
+      "state": 0,
+      "homeDeliveryState": 2,
+      "type": 3,
+      "serviceType": "relais",
+      "numSilo": "4",
+      "urlSiteCourse": "https://fd4-courses.leclercdrive.fr/magasin-123459-123459-relais-un.aspx",
+      "urlBase": "https://fd4-m.leclercdrive.fr/123459-000582/",
+      "urlFicheMagasin": "https://www.leclercdrive.fr/region-region-test/paris/drive-relais-un.aspx?external=1"
+    },
+    {
+      "coordinates": {
+        "latitude": 0.0,
+        "longitude": 0.0
+      },
+      "deliveryAreas": [
+        "00000"
+      ],
+      "distance": 0.4,
+      "mapPointId": 1097,
+      "name": "Relais Deux",
+      "noPL": "123459",
+      "noPR": "000012",
+      "postalCode": "00000",
+      "state": 0,
+      "homeDeliveryState": 2,
+      "type": 3,
+      "serviceType": "relais",
+      "numSilo": "4",
+      "urlSiteCourse": "https://fd4-courses.leclercdrive.fr/magasin-123459-123459-relais-deux.aspx",
+      "urlBase": "https://fd4-m.leclercdrive.fr/123459-000012/",
+      "urlFicheMagasin": "https://www.leclercdrive.fr/region-region-test/paris/drive-relais-deux.aspx?external=1"
+    },
+    {
+      "coordinates": {
+        "latitude": 0.0,
+        "longitude": 0.0
+      },
+      "deliveryAreas": [
+        "00000"
+      ],
+      "distance": 0.5,
+      "mapPointId": 480,
+      "name": "Ville Voisine",
+      "noPL": "123458",
+      "noPR": "123458",
+      "postalCode": "00000",
+      "state": 0,
+      "homeDeliveryState": 2,
+      "type": 1,
+      "serviceType": "drive",
+      "numSilo": "14",
+      "urlSiteCourse": "https://fd14-courses.leclercdrive.fr/magasin-123458-123458-ville-voisine.aspx",
+      "urlBase": "https://fd14-m.leclercdrive.fr/123458-123458/",
+      "urlFicheMagasin": "https://www.leclercdrive.fr/region-region-test/ville-voisine/drive-ville-voisine.aspx?external=1"
+    },
+    {
+      "coordinates": {
+        "latitude": 0.0,
+        "longitude": 0.0
+      },
+      "deliveryAreas": [
+        "00000"
+      ],
+      "distance": 0.6,
+      "mapPointId": 1020,
+      "name": "Relais Trois",
+      "noPL": "123460",
+      "noPR": "000002",
+      "postalCode": "00000",
+      "state": 0,
+      "homeDeliveryState": 2,
+      "type": 3,
+      "serviceType": "relais",
+      "numSilo": "4",
+      "urlSiteCourse": "https://fd4-courses.leclercdrive.fr/magasin-123460-123460-relais-trois.aspx",
+      "urlBase": "https://fd4-m.leclercdrive.fr/123460-000002/",
+      "urlFicheMagasin": "https://www.leclercdrive.fr/region-region-test/paris/drive-relais-trois.aspx?external=1"
+    }
+  ]
+}
