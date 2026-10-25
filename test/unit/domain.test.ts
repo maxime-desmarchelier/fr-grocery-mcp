@@ -70,7 +70,7 @@ describe("Cart", () => {
   const id = parseProductId("960853");
   const cart: Cart = {
     lines: [
-      { productId: id, name: "Spaghetti", quantity: parseQuantity(2), lineTotal: fromCents(190), unitPrice: null },
+      { lineTotal: fromCents(190), name: "Spaghetti", productId: id, quantity: parseQuantity(2), unitPrice: null },
     ],
     total: fromCents(190),
   };
@@ -109,8 +109,8 @@ describe("Errors", () => {
 
 describe("OrderConditions", () => {
   it("minimum order per mode, null if not exposed", () => {
-    const base = { store: null, bookedSlot: null, cartSlot: null, nextSlots: [] };
-    const known = { ...base, minimumOrders: [{ mode: "drive" as const, amount: fromCents(5000) }] };
+    const base = { bookedSlot: null, cartSlot: null, nextSlots: [], store: null };
+    const known = { ...base, minimumOrders: [{ amount: fromCents(5000), mode: "drive" as const }] };
     assert.equal(minimumFor(known, "drive"), 5000);
     assert.equal(minimumFor(known, "delivery"), null);
     assert.equal(minimumFor({ ...base, minimumOrders: null }, "drive"), null);

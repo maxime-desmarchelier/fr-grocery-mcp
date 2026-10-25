@@ -13,6 +13,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [Sem
 ### Changed
 
 - Node 26 is now the supported runtime (`engines`, CI, `mise.toml`); `@types/node` aligned on 26.x.
+- The Biome configuration is stricter: type-aware rules, `noFloatingPromises`, `noMisusedPromises`,
+  `noUndeclaredDependencies`, `useTopLevelRegex`, sorted object keys, and the regexes of `src/` and `scripts/`
+  hoisted to the module scope.
 - The toolchain is pinned in `mise.lock` (multi-platform) and CI installs it with `jdx/mise-action`, so the Node
   version is declared in one place only.
 

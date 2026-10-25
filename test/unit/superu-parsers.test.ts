@@ -34,9 +34,9 @@ describe("prices", () => {
   });
 
   it("reads a unit price", () => {
-    assert.deepEqual(parseUnitPrice("1,90 €/kg"), { price: 190, per: "kg" });
-    assert.deepEqual(parseUnitPrice("5,08 €/l"), { price: 508, per: "l" });
-    assert.deepEqual(parseUnitPrice("0,17 €/pce"), { price: 17, per: "piece" });
+    assert.deepEqual(parseUnitPrice("1,90 €/kg"), { per: "kg", price: 190 });
+    assert.deepEqual(parseUnitPrice("5,08 €/l"), { per: "l", price: 508 });
+    assert.deepEqual(parseUnitPrice("0,17 €/pce"), { per: "piece", price: 17 });
     assert.equal(parseUnitPrice(""), null);
   });
 });
@@ -54,12 +54,12 @@ describe("search page", () => {
   it("reads identifier, label, price and price per kg", () => {
     const barilla = spaghetti.products.find((p) => p.id === "960853");
     assert.deepEqual(barilla, {
+      available: true,
       id: "960853",
       name: "Pâtes Spaghetti N°5 BARILLA - 500g",
       price: 95,
-      unitPrice: { price: 190, per: "kg" },
-      available: true,
       promotions: [],
+      unitPrice: { per: "kg", price: 190 },
     });
   });
 
@@ -67,12 +67,12 @@ describe("search page", () => {
     const u = spaghetti.products.find((p) => p.id === "1177214");
     assert.deepEqual(u?.promotions, [
       {
+        details: ["20% versés sur votre Carte U pour l'achat de ce produit.", "Soit 0,27€ versés sur votre Carte U."],
         kind: "loyalty",
         label: "Avantage Carte U",
-        validUntil: "25/10",
-        details: ["20% versés sur votre Carte U pour l'achat de ce produit.", "Soit 0,27€ versés sur votre Carte U."],
+        mechanic: { amount: 27, type: "loyalty_amount" },
         regularPrice: null,
-        mechanic: { type: "loyalty_amount", amount: 27 },
+        validUntil: "25/10",
       },
     ]);
   });
@@ -85,15 +85,15 @@ describe("search page", () => {
     assert.equal(promo?.kind, "immediate");
     assert.equal(promo?.regularPrice, 871);
     assert.match(promo?.details[0] ?? "", /-34% de remise immédiate/);
-    assert.deepEqual(promo?.mechanic, { type: "percent_off", percent: 34 });
+    assert.deepEqual(promo?.mechanic, { percent: 34, type: "percent_off" });
   });
 
   it("keeps the single item's unit price, not the bundle's", () => {
     const chat = lessive.products.find((p) => p.id === "5119616");
-    assert.deepEqual(chat?.unitPrice, { price: 508, per: "l" });
+    assert.deepEqual(chat?.unitPrice, { per: "l", price: 508 });
     assert.ok(chat?.promotions[0]?.details.some((d) => /2ème produit/.test(d)));
     assert.equal(chat?.promotions[0]?.kind, "multibuy");
-    assert.deepEqual(chat?.promotions[0]?.mechanic, { type: "nth_percent_off", nth: 2, percent: 80 });
+    assert.deepEqual(chat?.promotions[0]?.mechanic, { nth: 2, percent: 80, type: "nth_percent_off" });
   });
 
   it("every product has a numeric identifier and a label", () => {
@@ -121,11 +121,11 @@ describe("cart page", () => {
   it("reads lines, quantities, line totals, unit prices and estimated total", () => {
     assert.equal(cart.lines.length, 4);
     assert.deepEqual(cart.lines[0], {
-      productId: "6352025",
-      name: "Oeufs frais - Plateau de 30",
-      quantity: 2,
       lineTotal: 970,
-      unitPrice: { price: 17, per: "piece" },
+      name: "Oeufs frais - Plateau de 30",
+      productId: "6352025",
+      quantity: 2,
+      unitPrice: { per: "piece", price: 17 },
     });
     assert.equal(cart.total, 6178);
     assert.equal(cart.csrfToken, "FIXTURE_CSRF");
@@ -139,43 +139,43 @@ describe("cart page", () => {
 describe("order conditions", () => {
   it("reads store, booked slot and next slots", () => {
     assert.deepEqual(parseSlotInfoPage(200, fixture("slot-info.html"), TODAY), {
-      store: "super u ville test",
-      bookedSlot: { label: "Dim. 25/10 de 08h30 à 09h00", start: "2026-10-25T08:30", end: "2026-10-25T09:00" },
+      bookedSlot: { end: "2026-10-25T09:00", label: "Dim. 25/10 de 08h30 à 09h00", start: "2026-10-25T08:30" },
       nextSlots: [
         {
-          mode: "drive",
-          slot: { label: "Dimanche 25 octobre à 08h00", start: "2026-10-25T08:00", end: null },
           available: true,
           full: false,
+          mode: "drive",
+          slot: { end: null, label: "Dimanche 25 octobre à 08h00", start: "2026-10-25T08:00" },
         },
         {
-          mode: "delivery",
-          slot: { label: "Dimanche 25 octobre à 07h00", start: "2026-10-25T07:00", end: null },
           available: true,
           full: false,
+          mode: "delivery",
+          slot: { end: null, label: "Dimanche 25 octobre à 07h00", start: "2026-10-25T07:00" },
         },
       ],
+      store: "super u ville test",
     });
   });
 
   it("no booked slot and no usable information", () => {
     const html = `<div data-footer-slots-info="pas du json"><p data-store-description-delivery>Choisir un créneau</p></div>`;
-    assert.deepEqual(parseSlotInfoPage(200, html, TODAY), { store: null, bookedSlot: null, nextSlots: [] });
+    assert.deepEqual(parseSlotInfoPage(200, html, TODAY), { bookedSlot: null, nextSlots: [], store: null });
   });
 
   it("full slot without a label", () => {
     const html = `<div data-footer-slots-info='{"drive":{"slotAvailable":false,"slotFull":true},"delivery":"?"}'></div>`;
     const page = parseSlotInfoPage(200, html, TODAY);
-    assert.deepEqual(page.nextSlots, [{ mode: "drive", slot: null, available: false, full: true }]);
+    assert.deepEqual(page.nextSlots, [{ available: false, full: true, mode: "drive", slot: null }]);
   });
 
   it("reads the minimum order per mode", () => {
     assert.deepEqual(parseMinimumOrder(200, fixture("cart.html")), [
-      { mode: "drive", amount: 5000 },
-      { mode: "delivery", amount: 5000 },
+      { amount: 5000, mode: "drive" },
+      { amount: 5000, mode: "delivery" },
     ]);
     assert.deepEqual(parseMinimumOrder(200, `<li class="cart-minimum-amount">Retrait drive : 35,50 €</li>`), [
-      { mode: "drive", amount: 3550 },
+      { amount: 3550, mode: "drive" },
     ]);
     assert.throws(() => parseMinimumOrder(403, ""), SiteBlockedError);
   });
@@ -206,7 +206,7 @@ describe("product page", () => {
 
   it("product page without a composition section", () => {
     const page = parseProductPage(200, "<h1>Poireaux vrac</h1><div id='product-details'></div>", id("1"));
-    assert.deepEqual(page, { id: "1", name: "Poireaux vrac", ingredients: null, allergens: null, origin: null });
+    assert.deepEqual(page, { allergens: null, id: "1", ingredients: null, name: "Poireaux vrac", origin: null });
   });
 
   it("unknown product, unreadable page and anti-bot", () => {

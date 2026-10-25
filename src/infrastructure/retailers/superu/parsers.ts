@@ -23,7 +23,29 @@ export const SUPERU_NAME = "Super U";
 type Root = ReturnType<DOMParser["parseFromString"]>;
 type Node = NonNullable<ReturnType<Root["querySelector"]>>;
 
-const clean = (text: string | null | undefined): string => (text ?? "").replace(/\s+/g, " ").trim();
+const WHITESPACE = /\s+/g;
+const NON_DIGIT = /\D/g;
+const BLOCKED = /captcha|datadome/i;
+const SPOKEN_PRICE = /(\d+) euros? (\d{1,2})\b/;
+const DISPLAYED_PRICE = /(\d[\d\s ]*),(\d{2})\s*€/;
+const UNIT_PRICE = /(\d+),(\d{2}) €\/(kg|l|pce)\b/;
+const OLD_PRICE = /au lieu de (\d+ euros? \d{1,2})/;
+const VALID_UNTIL = /jusqu'au (\d{2}\/\d{2})/;
+const INGREDIENTS_HEADING = /^ingr[ée]dients$/i;
+const INGREDIENTS_PREFIX = /^ingr[ée]dients\s*:\s*/i;
+const ORIGIN_HEADING = /^origine$/i;
+const MINI_CART = /mini-cart/;
+const SESSION_EXPIRED = /créneau arrivé à terme|session.*expir/i;
+const TOTAL_PRODUCTS = /(\d+)\s+produits?/;
+const LOGIN = /se connecter|connexion/i;
+const CART_TITLE = /Mon panier/;
+const SPOKEN_UNIT = /euros? \d+ centimes?/;
+const AMOUNT = /(\d+)(?:,(\d{2}))?\s*€/;
+const DRIVE_LABEL = /retrait|drive/i;
+const DELIVERY_LABEL = /livraison/i;
+const PICK_SLOT = /choisir un cr[ée]neau/i;
+
+const clean = (text: string | null | undefined): string => (text ?? "").replace(WHITESPACE, " ").trim();
 
 function parse(html: string): Root {
   return new DOMParser().parseFromString(html, "text/html");
@@ -38,29 +60,28 @@ function textOf(node: Node): string {
 
 /** "1 euros 34 centimes", "4 euros 72 au lieu de…" -> 134, 472 cents. */
 export function parseSpokenPrice(text: string): Money | null {
-  const m = clean(text).match(/(\d+) euros? (\d{1,2})\b/);
+  const m = clean(text).match(SPOKEN_PRICE);
   return m ? fromEurosAndCents(Number(m[1]), Number(m[2])) : null;
 }
 
 /** "1 234,56 €" -> 123456 cents. */
 export function parseDisplayedPrice(text: string): Money | null {
-  const m = clean(text).match(/(\d[\d\s ]*),(\d{2})\s*€/);
-  return m ? fromCents(Number(m[1]?.replace(/\D/g, "")) * 100 + Number(m[2])) : null;
+  const m = clean(text).match(DISPLAYED_PRICE);
+  return m ? fromCents(Number(m[1]?.replace(NON_DIGIT, "")) * 100 + Number(m[2])) : null;
 }
 
 const UNITS: Record<string, PricingUnit> = { kg: "kg", l: "l", pce: "piece" };
 
 /** "1,90 €/kg" -> { price: 190, per: "kg" }. */
 export function parseUnitPrice(text: string): UnitPrice | null {
-  const m = clean(text).match(/(\d+),(\d{2}) €\/(kg|l|pce)\b/);
+  const m = clean(text).match(UNIT_PRICE);
   const per = m?.[3] ? UNITS[m[3]] : undefined;
-  return m && per ? { price: fromEurosAndCents(Number(m[1]), Number(m[2])), per } : null;
+  return m && per ? { per, price: fromEurosAndCents(Number(m[1]), Number(m[2])) } : null;
 }
 
 /** Throws the matching error if the response is an anti-bot block. */
 export function assertNotBlocked(status: number, html: string): void {
-  if (status === 403 || status === 429 || /captcha|datadome/i.test(html.slice(0, 4000)))
-    throw new SiteBlockedError(SUPERU_NAME);
+  if (status === 403 || status === 429 || BLOCKED.test(html.slice(0, 4000))) throw new SiteBlockedError(SUPERU_NAME);
 }
 
 const UNAVAILABLE = /indisponible|rupture de stock|plus disponible|bientôt disponible/i;
@@ -80,12 +101,12 @@ function parsePromotion(tile: Node, text: string): Promotion | null {
   const unique = [...new Set(details)];
   const mechanic = parseMechanic(unique.join(" "));
   return {
+    details: unique,
     kind: kindOf(mechanic),
     label,
-    validUntil: text.match(/jusqu'au (\d{2}\/\d{2})/)?.[1] ?? null,
-    details: unique,
-    regularPrice: parseSpokenPrice(text.match(/au lieu de (\d+ euros? \d{1,2})/)?.[1] ?? ""),
     mechanic,
+    regularPrice: parseSpokenPrice(text.match(OLD_PRICE)?.[1] ?? ""),
+    validUntil: text.match(VALID_UNTIL)?.[1] ?? null,
   };
 }
 
@@ -95,12 +116,12 @@ function parseTile(tile: Node): Product | null {
   if (!rawId || !name) return null;
   const text = textOf(tile);
   return {
+    available: !UNAVAILABLE.test(text),
     id: parseProductId(rawId),
     name,
     price: parseSpokenPrice(text),
-    unitPrice: parseUnitPrice(regularUnitInfo(tile)),
-    available: !UNAVAILABLE.test(text),
     promotions: [parsePromotion(tile, text)].filter((p): p is Promotion => p !== null),
+    unitPrice: parseUnitPrice(regularUnitInfo(tile)),
   };
 }
 
@@ -119,11 +140,11 @@ export function parseProductPage(status: number, html: string, id: ProductId): P
   const name = clean(doc.querySelector("h1")?.textContent);
   if (!name) throw new TransientError(`Unreadable product page ${id}: the site may have changed.`);
   return {
-    id,
-    name,
-    ingredients: detailsSection(doc, /^ingr[ée]dients$/i)?.replace(/^ingr[ée]dients\s*:\s*/i, "") ?? null,
     allergens: null,
-    origin: detailsSection(doc, /^origine$/i),
+    id,
+    ingredients: detailsSection(doc, INGREDIENTS_HEADING)?.replace(INGREDIENTS_PREFIX, "") ?? null,
+    name,
+    origin: detailsSection(doc, ORIGIN_HEADING),
   };
 }
 
@@ -139,15 +160,12 @@ export function parseSearchPage(status: number, html: string): SearchPage {
   assertNotBlocked(status, html);
   const doc = parse(html);
   const tiles = [...doc.querySelectorAll(".product-tile")].filter(
-    (t) => !/mini-cart/.test(t.getAttribute("class") ?? ""),
+    (t) => !MINI_CART.test(t.getAttribute("class") ?? ""),
   );
-  if (tiles.length === 0 && /créneau arrivé à terme|session.*expir/i.test(html))
-    throw new SessionExpiredError(SUPERU_NAME);
+  if (tiles.length === 0 && SESSION_EXPIRED.test(html)) throw new SessionExpiredError(SUPERU_NAME);
   const products = tiles.map(parseTile).filter((p): p is Product => p !== null);
-  const total = Number(
-    clean(doc.querySelector("body")?.textContent).match(/(\d+)\s+produits?/)?.[1] ?? products.length,
-  );
-  return { products, total, csrfToken: csrf(doc) };
+  const total = Number(clean(doc.querySelector("body")?.textContent).match(TOTAL_PRODUCTS)?.[1] ?? products.length);
+  return { csrfToken: csrf(doc), products, total };
 }
 
 export interface CartPage {
@@ -161,23 +179,23 @@ export function parseCartPage(status: number, html: string): CartPage {
   assertNotBlocked(status, html);
   const doc = parse(html);
   const rows = [...doc.querySelectorAll("li.cart-row")];
-  if (rows.length === 0 && /se connecter|connexion/i.test(html) && !/Mon panier/.test(html)) {
+  if (rows.length === 0 && LOGIN.test(html) && !CART_TITLE.test(html)) {
     throw new SessionExpiredError(SUPERU_NAME);
   }
   const lines = rows.map(parseCartRow).filter((l): l is CartLine => l !== null);
   const total = parseDisplayedPrice(doc.querySelector(".order-total-estimate")?.textContent ?? "");
-  return { lines, total, csrfToken: csrf(doc) };
+  return { csrfToken: csrf(doc), lines, total };
 }
 
 function parseCartRow(row: Node): CartLine | null {
   const rawId = row.querySelector('input[name="pid"]')?.getAttribute("value");
   if (!rawId) return null;
-  const spoken = [...row.querySelectorAll(".sr-only")].find((e) => /euros? \d+ centimes?/.test(e.textContent ?? ""));
+  const spoken = [...row.querySelectorAll(".sr-only")].find((e) => SPOKEN_UNIT.test(e.textContent ?? ""));
   return {
-    productId: parseProductId(rawId),
-    name: clean(row.querySelector('[class*="product-name"]')?.textContent),
-    quantity: parseQuantity(Number(row.querySelector('input[name="Quantity"]')?.getAttribute("value") ?? 0)),
     lineTotal: spoken ? parseSpokenPrice(spoken.textContent ?? "") : null,
+    name: clean(row.querySelector('[class*="product-name"]')?.textContent),
+    productId: parseProductId(rawId),
+    quantity: parseQuantity(Number(row.querySelector('input[name="Quantity"]')?.getAttribute("value") ?? 0)),
     unitPrice: parseUnitPrice(regularUnitInfo(row)),
     // No availability: the .notavailable block is on every line, hidden with CSS.
   };
@@ -193,14 +211,14 @@ export function parseMinimumOrder(status: number, html: string): MinimumOrder[] 
   const doc = parse(html);
   const amounts = [...doc.querySelectorAll(".cart-minimum-amount")].map((e) => clean(e.textContent));
   const find = (label: RegExp) => {
-    const m = amounts.find((a) => label.test(a))?.match(/(\d+)(?:,(\d{2}))?\s*€/);
+    const m = amounts.find((a) => label.test(a))?.match(AMOUNT);
     return m ? fromEurosAndCents(Number(m[1]), Number(m[2] ?? 0)) : null;
   };
   const minimums: MinimumOrder[] = [];
-  const drive = find(/retrait|drive/i);
-  const delivery = find(/livraison/i);
-  if (drive !== null) minimums.push({ mode: "drive", amount: drive });
-  if (delivery !== null) minimums.push({ mode: "delivery", amount: delivery });
+  const drive = find(DRIVE_LABEL);
+  const delivery = find(DELIVERY_LABEL);
+  if (drive !== null) minimums.push({ amount: drive, mode: "drive" });
+  if (delivery !== null) minimums.push({ amount: delivery, mode: "delivery" });
   return minimums;
 }
 
@@ -222,9 +240,9 @@ export function parseSlotInfoPage(status: number, html: string, today: Date): Sl
   const store = storeParts.filter(Boolean).join(" ") || null;
   const booked = clean((wrapper ?? doc).querySelector("[data-store-description-delivery]")?.textContent);
   return {
-    store,
-    bookedSlot: booked && !/choisir un cr[ée]neau/i.test(booked) ? parseSlotLabel(booked, today) : null,
+    bookedSlot: booked && !PICK_SLOT.test(booked) ? parseSlotLabel(booked, today) : null,
     nextSlots: [info.drive, info.delivery].filter((s): s is NextSlot => s !== null),
+    store,
   };
 }
 
@@ -243,14 +261,14 @@ function parseSlotsJson(
     const v = value as { slotText?: unknown; slotAvailable?: unknown; slotFull?: unknown };
     const label = typeof v.slotText === "string" ? clean(decodeEntities(v.slotText)) : "";
     return {
-      mode,
-      slot: label ? parseSlotLabel(label, today) : null,
       available: v.slotAvailable === true,
       full: v.slotFull === true,
+      mode,
+      slot: label ? parseSlotLabel(label, today) : null,
     };
   };
   const d = (typeof data === "object" && data !== null ? data : {}) as { drive?: unknown; delivery?: unknown };
-  return { drive: slot("drive", d.drive), delivery: slot("delivery", d.delivery) };
+  return { delivery: slot("delivery", d.delivery), drive: slot("drive", d.drive) };
 }
 
 /** The attribute's JSON keeps HTML entities ("&agrave;"): decode them with the parser. */

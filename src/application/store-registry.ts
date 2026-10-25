@@ -1,6 +1,8 @@
 import { ValidationError } from "../domain/errors.ts";
 import type { ShoppingService } from "./shopping-service.ts";
 
+const RETAILER_ID = /^[a-z][a-z0-9-]{1,31}$/;
+
 /** Retailer plugged into the server. */
 export interface RegisteredStore {
   /** Short identifier passed to the tools ("superu", "leclerc"). */
@@ -18,8 +20,7 @@ export class StoreRegistry {
     if (stores.length === 0) throw new ValidationError("No retailer configured.");
     const byId = new Map<string, RegisteredStore>();
     for (const store of stores) {
-      if (!/^[a-z][a-z0-9-]{1,31}$/.test(store.id))
-        throw new ValidationError(`Invalid retailer identifier: ${store.id}`);
+      if (!RETAILER_ID.test(store.id)) throw new ValidationError(`Invalid retailer identifier: ${store.id}`);
       if (byId.has(store.id)) throw new ValidationError(`Duplicate retailer: ${store.id}`);
       byId.set(store.id, store);
     }

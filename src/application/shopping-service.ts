@@ -10,6 +10,8 @@ export const DEFAULT_SEARCH_LIMIT = 20;
 export const MAX_QUANTITY_PER_LINE = 50;
 export const MAX_SEARCH_LIMIT = 100;
 
+const STORE_ID = /^[A-Za-z0-9_-]{1,32}$/;
+
 /** Result of a cart change, read back from the site. */
 export interface CartChange {
   readonly productId: ProductId;
@@ -81,7 +83,7 @@ export class ShoppingService {
 
   selectStore(id: string): Promise<StoreLocation> {
     const value = id.trim();
-    if (!/^[A-Za-z0-9_-]{1,32}$/.test(value)) throw new ValidationError(`Invalid store identifier: "${id}"`);
+    if (!STORE_ID.test(value)) throw new ValidationError(`Invalid store identifier: "${id}"`);
     return this.#store.selectStore(value);
   }
 
@@ -111,11 +113,11 @@ export class ShoppingService {
       cart = await this.#store.getCart();
     }
     return {
-      productId: id,
+      cartTotal: cart.total,
+      confirmed: matches(cart, id, expected),
       expectedQuantity: expected,
       line: findLine(cart, id),
-      confirmed: matches(cart, id, expected),
-      cartTotal: cart.total,
+      productId: id,
     };
   }
 }

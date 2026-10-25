@@ -8,7 +8,7 @@ export function superuSite(url: string, init: HttpRequest | undefined): HttpResp
   if (init?.method === "POST") return ok("{}");
   if (url.startsWith("/recherche")) return page("search-spaghetti.html");
   if (url.startsWith("/p/produit/"))
-    return url.includes("/960853.") ? page("product-pesto.html") : { status: 410, body: "" };
+    return url.includes("/960853.") ? page("product-pesto.html") : { body: "", status: 410 };
   if (url.includes("Home-IncludeNavigationSlotTimeInfo")) return page("slot-info.html");
   return page("cart.html");
 }

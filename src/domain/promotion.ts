@@ -33,6 +33,12 @@ export interface Promotion {
   readonly mechanic: Mechanic | null;
 }
 
+const LOYALTY_AMOUNT = /(\d+),(\d{2}) ?€ verses sur votre carte/;
+const LOYALTY_PERCENT = /(\d+(?:,\d+)?) ?% (?:verses sur|en ticket|sur (?:votre|la) carte)/;
+const NTH_PERCENT_FIRST = /\b(\d+) ?(?:e|eme|ieme)\b[^%]*?(?:-(\d+) ?%|offert|gratuit)/;
+const NTH_PERCENT_AFTER = /-(\d+) ?%[^.]*? sur le (\d+) ?(?:e|eme|ieme)\b/;
+const IMMEDIATE_PERCENT = /(?:avantage immediat de |-)(\d+(?:,\d+)?) ?%/;
+
 const normalize = (text: string): string =>
   text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ");
 
@@ -45,23 +51,23 @@ const percent = (raw: string | undefined): number | null => {
 export function parseMechanic(text: string): Mechanic | null {
   const t = normalize(text);
 
-  const amount = t.match(/(\d+),(\d{2}) ?€ verses sur votre carte/);
-  if (amount) return { type: "loyalty_amount", amount: fromEurosAndCents(Number(amount[1]), Number(amount[2])) };
+  const amount = t.match(LOYALTY_AMOUNT);
+  if (amount) return { amount: fromEurosAndCents(Number(amount[1]), Number(amount[2])), type: "loyalty_amount" };
 
-  const loyalty = percent(t.match(/(\d+(?:,\d+)?) ?% (?:verses sur|en ticket|sur (?:votre|la) carte)/)?.[1]);
-  if (loyalty) return { type: "loyalty_percent", percent: loyalty };
+  const loyalty = percent(t.match(LOYALTY_PERCENT)?.[1]);
+  if (loyalty) return { percent: loyalty, type: "loyalty_percent" };
 
   // "Le 2ème article à -40%", "Le 3ème est offert", "-80% de remise immédiate sur le 2ème produit acheté"
-  const nthFirst = t.match(/\b(\d+) ?(?:e|eme|ieme)\b[^%]*?(?:-(\d+) ?%|offert|gratuit)/);
-  const nthAfter = t.match(/-(\d+) ?%[^.]*? sur le (\d+) ?(?:e|eme|ieme)\b/);
+  const nthFirst = t.match(NTH_PERCENT_FIRST);
+  const nthAfter = t.match(NTH_PERCENT_AFTER);
   if (nthFirst?.[1] || nthAfter?.[2]) {
     const nth = Number(nthFirst?.[1] ?? nthAfter?.[2]);
     const off = nthFirst ? (nthFirst[2] === undefined ? 100 : percent(nthFirst[2])) : percent(nthAfter?.[1]);
-    if (off && nth >= 2) return { type: "nth_percent_off", nth, percent: off };
+    if (off && nth >= 2) return { nth, percent: off, type: "nth_percent_off" };
   }
 
-  const immediate = percent(t.match(/(?:avantage immediat de |-)(\d+(?:,\d+)?) ?%/)?.[1]);
-  if (immediate) return { type: "percent_off", percent: immediate };
+  const immediate = percent(t.match(IMMEDIATE_PERCENT)?.[1]);
+  if (immediate) return { percent: immediate, type: "percent_off" };
 
   return null;
 }
@@ -98,7 +104,7 @@ export function lineCost(price: Money, promotions: readonly Promotion[], quantit
     return ZERO;
   });
   const loyalty = sum(credits);
-  return { paid, loyalty, net: subtract(paid, loyalty) };
+  return { loyalty, net: subtract(paid, loyalty), paid };
 }
 
 /** Best unit offer: quantity that triggers the promotion and net cost per unit at that quantity. */
@@ -113,5 +119,5 @@ export function bestOffer(price: Money, promotions: readonly Promotion[]): BestO
     ...promotions.map(({ mechanic }) => (mechanic?.type === "nth_percent_off" ? mechanic.nth : 1)),
   );
   const { net } = lineCost(price, promotions, quantity);
-  return { quantity, netUnitPrice: fromCents(Math.round(net / quantity)) };
+  return { netUnitPrice: fromCents(Math.round(net / quantity)), quantity };
 }

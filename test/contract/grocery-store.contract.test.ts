@@ -27,43 +27,43 @@ interface Subject {
 
 const subjects: readonly Subject[] = [
   {
-    name: "simulateur",
+    knownProduct: "960853",
     make: () =>
       new InMemoryStore(CATALOGUE, {
         conditions: {
-          store: "simulated",
           bookedSlot: null,
           cartSlot: null,
+          minimumOrders: [{ amount: fromCents(5000), mode: "drive" }],
           nextSlots: [],
-          minimumOrders: [{ mode: "drive", amount: fromCents(5000) }],
+          store: "simulated",
         },
-        locations: [{ id: "1", name: "Simulated", serviceType: "drive", distanceKm: 0, postalCode: "00000" }],
+        locations: [{ distanceKm: 0, id: "1", name: "Simulated", postalCode: "00000", serviceType: "drive" }],
       }),
-    knownProduct: "960853",
+    name: "simulateur",
+    searchTerm: "spaghetti",
     unknownProduct: "123",
-    searchTerm: "spaghetti",
   },
   {
-    name: "Super U",
-    make: () => new SuperUStore(new FakeHttp(superuSite)),
     knownProduct: "960853",
-    unknownProduct: "1",
+    make: () => new SuperUStore(new FakeHttp(superuSite)),
+    name: "Super U",
     searchTerm: "spaghetti",
+    unknownProduct: "1",
   },
   {
-    name: "E.Leclerc Drive",
+    knownProduct: "7459",
     make: () =>
       new LeclercStore({
         http: () => new FakeHttp(leclercSite),
         selection: new MemorySelection({
-          storeId: "123456",
-          retrievalPointId: "123456",
           host: "fd7-courses.leclercdrive.fr",
+          retrievalPointId: "123456",
+          storeId: "123456",
         }),
       }),
-    knownProduct: "7459",
-    unknownProduct: "999999999",
+    name: "E.Leclerc Drive",
     searchTerm: "spaghetti",
+    unknownProduct: "999999999",
   },
 ];
 

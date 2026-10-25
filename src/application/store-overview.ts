@@ -24,9 +24,9 @@ async function attempt<T>(
   fn: () => Promise<T>,
 ): Promise<{ value: T; failure: null } | { value: null; failure: StoreFailure }> {
   try {
-    return { value: await fn(), failure: null };
+    return { failure: null, value: await fn() };
   } catch (error) {
-    return { value: null, failure: failureOf(error) };
+    return { failure: failureOf(error), value: null };
   }
 }
 
@@ -41,7 +41,7 @@ export interface StoreStatus {
 
 /** A retailer's capabilities and, if `check`, its order conditions (proof that the session responds). */
 export async function statusOf(store: RegisteredStore, check: boolean): Promise<StoreStatus> {
-  const base = { id: store.id, name: store.name, capabilities: store.service.capabilities };
+  const base = { capabilities: store.service.capabilities, id: store.id, name: store.name };
   if (!check) return { ...base, conditions: null, failure: null };
   const { value, failure } = await attempt(() => store.service.getOrderConditions());
   return { ...base, conditions: value, failure };
@@ -77,7 +77,7 @@ async function summarize(store: RegisteredStore, mode: FulfilmentMode): Promise<
   const base = { id: store.id, name: store.name };
   const cart = await attempt(() => store.service.getCart());
   if (cart.failure) {
-    return { ...base, cart: null, conditions: null, minimumOrder: null, missingToMinimum: null, failure: cart.failure };
+    return { ...base, cart: null, conditions: null, failure: cart.failure, minimumOrder: null, missingToMinimum: null };
   }
   // Optional conditions: a failure here does not invalidate the cart.
   const conditions = await attempt(() => store.service.getOrderConditions());
@@ -87,9 +87,9 @@ async function summarize(store: RegisteredStore, mode: FulfilmentMode): Promise<
     ...base,
     cart: cart.value,
     conditions: conditions.value,
+    failure: conditions.failure,
     minimumOrder,
     missingToMinimum: minimumOrder !== null && total !== null ? subtract(minimumOrder, total) : null,
-    failure: conditions.failure,
   };
 }
 
@@ -103,5 +103,5 @@ export async function compareCarts(registry: StoreRegistry, mode: FulfilmentMode
   const rank = (s: CartSummary): number => s.cart?.total ?? Number.POSITIVE_INFINITY;
   const sorted = summaries.toSorted((a, b) => rank(a) - rank(b));
   const cheapest = sorted.find((s) => s.cart !== null && s.cart.total !== null && s.cart.lines.length > 0)?.id ?? null;
-  return { mode, stores: sorted, cheapest };
+  return { cheapest, mode, stores: sorted };
 }

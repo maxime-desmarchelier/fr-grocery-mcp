@@ -15,10 +15,10 @@ import { FakeHttp, ok } from "../support/fake-http.ts";
 import { leclercSite } from "../support/fake-sites.ts";
 
 const TESTVILLE = {
-  storeId: "123456",
-  retrievalPointId: "123456",
   host: "fd7-courses.leclercdrive.fr",
   name: "Testville",
+  retrievalPointId: "123456",
+  storeId: "123456",
 };
 const BASE = "/magasin-123456-123456";
 
@@ -31,10 +31,10 @@ function setup(routes: (url: string, init: HttpRequest | undefined) => HttpRespo
       origins.push([origin, home]);
       return http;
     },
-    selection,
     now: () => new Date(2026, 9, 24, 12, 0, 0, clock.now),
+    selection,
   });
-  return { http, origins, selection, store, clock };
+  return { clock, http, origins, selection, store };
 }
 
 const site = leclercSite;
@@ -125,7 +125,7 @@ describe("LeclercStore", () => {
   });
 
   it("quantity: anti-bot block and non-numeric identifier", async () => {
-    const { store } = setup((url, init) => (init?.method === "POST" ? { status: 403, body: "" } : site(url, init)));
+    const { store } = setup((url, init) => (init?.method === "POST" ? { body: "", status: 403 } : site(url, init)));
     await assert.rejects(store.setQuantity(parseProductId("1"), parseQuantity(1)), SiteBlockedError);
     await assert.rejects(store.setQuantity(parseProductId("abc"), parseQuantity(1)), ValidationError);
     await assert.rejects(store.getProduct(parseProductId("abc")), ValidationError);
@@ -136,21 +136,21 @@ describe("LeclercStore", () => {
     const found = await store.findStores("00000");
     assert.equal(found.length, 6);
     assert.deepEqual(found[1], {
+      distanceKm: 0.2,
       id: "123457",
       name: "Testville North",
-      serviceType: "drive",
-      distanceKm: 0.2,
       postalCode: "00000",
+      serviceType: "drive",
     });
     assert.ok(origins.some(([origin]) => origin === "https://www.leclercdrive.fr"));
     assert.match(http.urls[2] ?? "", /MapPoint\/nearby\?latitude=48.8584&longitude=2.2945&postalCode=00000$/);
 
     await store.selectStore("123459-000582");
     assert.deepEqual(selection.current(), {
-      storeId: "123459",
-      retrievalPointId: "000582",
       host: "fd4-courses.leclercdrive.fr",
       name: "Relais Un",
+      retrievalPointId: "000582",
+      storeId: "123459",
     });
     await store.getCart();
     assert.equal(http.urls.at(-1), "/magasin-123459-000582/recherche.aspx");
@@ -169,7 +169,7 @@ describe("FileSelection", () => {
     const path = join(mkdtempSync(join(tmpdir(), "courses-")), "state", "leclerc-store.json");
     const first = new FileSelection(path, TESTVILLE);
     assert.deepEqual(first.current(), TESTVILLE);
-    const other = { ...TESTVILLE, storeId: "123457", retrievalPointId: "123457" };
+    const other = { ...TESTVILLE, retrievalPointId: "123457", storeId: "123457" };
     first.save(other);
     assert.deepEqual(new FileSelection(path, TESTVILLE).current(), other);
     assert.throws(() => first.save({ ...TESTVILLE, host: "evil.example" }));
