@@ -28,5 +28,6 @@ jobs:
           restore-keys: npm-${{ runner.os }}-
       - run: npm ci
       # Same ruleset as the git hook: biome, tsc, hygiene, markdown, workflows.
-      - run: mise x -- hk check --all
+      # `no_commit_to_branch` is a commit-time guard (it fails on main by design), so CI skips it.
+      - run: mise x -- hk check --all --skip-step no_commit_to_branch
       - run: npm run test:coverage
