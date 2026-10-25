@@ -2,9 +2,14 @@ min_version = "2026.1.0"
 
 [tools]
 node = "26"
+hk = "2.8.1"
 
 [settings]
 lockfile = true
+
+# hk runs the linters from node_modules through `mise x`, and does not install them itself.
+[env]
+_.path = ["node_modules/.bin"]
 
 [tasks.chrome]
 description = "Debug Chrome (port 9222) on a dedicated profile, where you log in once to each site"

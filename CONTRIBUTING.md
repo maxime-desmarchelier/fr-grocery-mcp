@@ -32,6 +32,27 @@ and only when you ask for it.
 Changing the Node version means bumping it in `mise.toml`, `package.json` (`engines`, `@types/node`) and refreshing
 `mise.lock` with `mise lock`.
 
+## Git hooks
+
+[hk](https://hk.jdx.dev) runs the linters that are already in the toolchain, on the files a commit touches:
+
+```sh
+mise x -- hk install --global --mise   # once per machine, Git 2.54+; no-op in repos without hk.pkl
+mise x -- hk check                     # check the files you are about to commit
+mise x -- hk check --all               # check the whole repository
+mise x -- hk fix                       # apply the fixes without staging them
+mise x -- hk run pre-commit --plan     # show what the pre-commit hook would do
+```
+
+`pre-commit` runs `biome` and `tsc` (from [hk.pkl](hk.pkl)), applies their fixes and stages the result; anything you
+left unstaged is stashed and restored. `HK=0 git commit …` skips the hook, and `hk install` without `--global` installs
+it for this repository only.
+
+The linters come from `node_modules`, not from mise: run `npm ci` first. hk itself is pinned in `mise.toml`, and its
+Pkl imports in `hk.pkl` must carry the **same version** — bumping `hk` does not rewrite those URLs, so change both by
+hand. hk has no macOS Intel build, so on an Intel Mac install just the runtime with `mise install node`.
+
+
 ## Code rules
 
 The full reasoning is in [AGENTS.md](AGENTS.md) and [docs/architecture.md](docs/architecture.md). The ones that
