@@ -11,18 +11,26 @@ access to French online grocery sites, and never place an order.
 
 ## Setup
 
-Node 26 (or later) is needed. The versions used by the project are pinned in [mise.toml](mise.toml).
+Node 26 (or later) is needed. The toolchain is declared in [mise.toml](mise.toml) and pinned in `mise.lock`, so
+everyone and CI install the same version.
 
 ```sh
 git clone https://github.com/maxime-desmarchelier/fr-grocery-mcp
 cd fr-grocery-mcp
+mise install --locked            # Node from mise.lock; or install Node 26 yourself
 npm ci
-npm run check
+mise run check                   # same as npm run check
 ```
+
+If you already have a global mise config with unpinned tools, `mise install --locked` may report them as missing from
+the lockfile: run `mise lock --global` once, or install the project tools with `mise install node`.
 
 `npm run check` (typecheck + Biome + tests with coverage thresholds) is exactly what CI runs: it must pass before any
 commit is proposed. Tests never touch the real sites; `npm run doctor` and `npm run test:live` do, at your own risk
 and only when you ask for it.
+
+Changing the Node version means bumping it in `mise.toml`, `package.json` (`engines`, `@types/node`) and refreshing
+`mise.lock` with `mise lock`.
 
 ## Code rules
 
