@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [Sem
 
 - Security policy, contribution guide, issue and pull request templates, code owners.
 
+### Changed
+
+- Node 26 is now the supported runtime (`engines`, CI, `mise.toml`); `@types/node` aligned on 26.x.
+
 ## [0.1.0] - 2026-10-25
 
 First public release: a single MCP server for several French online grocery services ("drive"), with

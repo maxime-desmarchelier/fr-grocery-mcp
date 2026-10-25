@@ -1,5 +1,5 @@
 [tools]
-node = "24"
+node = "26"
 
 [tasks.chrome]
 description = "Debug Chrome (port 9222) on a dedicated profile, where you log in once to each site"

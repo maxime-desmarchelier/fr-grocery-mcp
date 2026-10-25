@@ -58,7 +58,7 @@ Product labels, promotion texts and search terms stay in French, as on the sites
 
 ## Requirements
 
-- Node ≥ 24.11 (runs TypeScript natively: no build step). With mise: `mise install`.
+- Node ≥ 26 (runs TypeScript natively: no build step). With mise: `mise install`.
 - A Chrome started with `--remote-debugging-port=9222` and logged in to the sites (`mise run chrome` starts a
   dedicated profile in `~/.fr-grocery-mcp/chrome`). One tab per site is found, or opened, by its domain.
 

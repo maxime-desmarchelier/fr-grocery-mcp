@@ -65,7 +65,7 @@ instead of retrying, no tool books a slot or places an order.
 **No dubious signal.** The `.notavailable` block of the Super U cart is present on every line (hidden with CSS):
 it is not read. The Leclerc minimum is not exposed when logged out: `minimumOrders: null`, never 0.
 
-**TypeScript run natively by Node 24** (type stripping): no build, `tsc` (TypeScript 7) only type-checks.
+**TypeScript run natively by Node 26** (type stripping): no build, `tsc` (TypeScript 7) only type-checks.
 `erasableSyntaxOnly` forbids non-erasable syntax (enums, parameter properties).
 
 ## Tests
