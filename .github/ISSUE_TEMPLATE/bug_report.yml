@@ -1,0 +1,64 @@
+name: Bug report
+description: Something does not work as documented (not a security problem)
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a security problem, do **not** file a bug: use
+        [private vulnerability reporting](https://github.com/maxime-desmarchelier/fr-grocery-mcp/security/advisories/new)
+        instead (see SECURITY.md).
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `git rev-parse --short HEAD`, or the release tag.
+      placeholder: v0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node version, OS, and the MCP client used (Claude Code, Inspector, other).
+      placeholder: Node 24.11, macOS 15, Claude Code
+    validations:
+      required: true
+
+  - type: dropdown
+    id: retailer
+    attributes:
+      label: Retailer
+      options:
+        - Leclerc
+        - Super U
+        - Both
+        - Neither (configuration, MCP protocol, tooling)
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The tool called, the arguments, and the result (redact product IDs, store names and session data).
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: stderr of the server, with anything personal removed.
+      render: shell
+    validations:
+      required: false

@@ -1,0 +1,46 @@
+name: Feature request
+description: Propose a tool, a retailer or a behaviour change
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep in mind the project's two invariants: **no tool may place an order, book a slot or pay**, and **nothing
+        bypasses a site's protections**. Anything that breaks them will be refused, however useful.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What you are trying to do today, and where it hurts.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The tool or behaviour you would like, with its inputs and outputs.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - New retailer
+        - Existing retailer adapter
+        - MCP tools or presentation
+        - Configuration or tooling
+        - Documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other tools, manual steps, or a simpler scope that would do.
+    validations:
+      required: false
