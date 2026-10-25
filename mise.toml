@@ -23,3 +23,7 @@ run = '"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-d
 [tasks.check]
 description = "typecheck + lint + tests with coverage"
 run = "npm run check"
+
+[tasks.lint]
+description = "same rules as the git hook and CI (hk check --all)"
+run = "hk check --all"

@@ -27,6 +27,6 @@ jobs:
           key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-${{ runner.os }}-
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
+      # Same ruleset as the git hook: biome, tsc, hygiene, markdown, workflows.
+      - run: mise x -- hk check --all
       - run: npm run test:coverage
