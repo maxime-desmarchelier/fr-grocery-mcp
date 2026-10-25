@@ -23,7 +23,7 @@ body:
     attributes:
       label: Environment
       description: Node version, OS, and the MCP client used (Claude Code, Inspector, other).
-      placeholder: Node 24.11, macOS 15, Claude Code
+      placeholder: Node 26, macOS 15, Claude Code
     validations:
       required: true
 

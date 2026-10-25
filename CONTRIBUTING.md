@@ -11,7 +11,7 @@ access to French online grocery sites, and never place an order.
 
 ## Setup
 
-Node 24 (or later) is needed. The versions used by the project are pinned in [mise.toml](mise.toml).
+Node 26 (or later) is needed. The versions used by the project are pinned in [mise.toml](mise.toml).
 
 ```sh
 git clone https://github.com/maxime-desmarchelier/fr-grocery-mcp
