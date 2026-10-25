@@ -1,6 +1,6 @@
 # Instructions for coding agents
 
-Multi-retailer MCP server (E.Leclerc Drive, Super U) in TypeScript, run natively by Node 24 (no build step).
+Multi-retailer MCP server (E.Leclerc Drive, Super U) in TypeScript, run natively by Node 26 (no build step).
 Read `docs/architecture.md`; for a new retailer, `docs/adding-a-retailer.md`.
 
 ## Commands
