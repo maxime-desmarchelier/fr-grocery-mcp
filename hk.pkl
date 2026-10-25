@@ -28,6 +28,11 @@ steps {
 
   // mise.toml is formatted by mise itself.
   ["mise"] = Builtins.mise
+
+  // GitHub Actions: syntax, policy and supply chain.
+  ["jactionlint"] = Builtins.jactionlint
+  ["pinact"] = Builtins.pinact
+  ["zizmor"] = Builtins.zizmor
 }
 
 hooks {
