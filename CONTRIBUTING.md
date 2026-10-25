@@ -58,6 +58,9 @@ A second hook, `commit-msg`, enforces [Conventional Commits](https://www.convent
 `test/fixtures/**` is excluded from the text checks: those pages are captured from the sites, and their bytes are what
 the parsers are tested against (`npm run fixtures`).
 
+CI runs the same ruleset with `hk check --all`, minus `no_commit_to_branch`: that step is a commit-time guard, and it
+fails on `main` by design.
+
 The linters come from `node_modules`, not from mise: run `npm ci` first. hk itself is pinned in `mise.toml`, and its
 Pkl imports in `hk.pkl` must carry the **same version** — bumping `hk` does not rewrite those URLs, so change both by
 hand. hk has no macOS Intel build, so on an Intel Mac install just the runtime with `mise install node`.

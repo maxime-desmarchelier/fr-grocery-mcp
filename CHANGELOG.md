@@ -14,7 +14,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [Sem
   readable version in a comment; Dependabot still proposes the updates. `dependabot.yml` gets a 7-day cooldown.
 - Markdown is linted with `rumdl` (`.rumdl.toml`): 120 columns, no bare code block, no double blank line.
 - CI runs `hk check --all`, the same ruleset as the git hooks (Biome, `tsc`, hygiene, markdown, workflows), instead of
-  separate `typecheck` and `lint` commands; `mise run lint` runs it locally. Tests stay a separate step.
+  separate `typecheck` and `lint` commands; `mise run lint` runs it locally. Tests stay a separate step. CI
+  skips `no_commit_to_branch`, which only makes sense when committing.
 
 ### Changed
 
