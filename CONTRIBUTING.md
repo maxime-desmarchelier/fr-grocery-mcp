@@ -20,14 +20,15 @@ cd fr-grocery-mcp
 mise install --locked            # Node from mise.lock; or install Node 26 yourself
 npm ci
 mise run check                   # same as npm run check: typecheck, lint, tests with coverage
-mise run lint                    # the git hook's ruleset on the whole repository (hk check --all)
+mise run lint                    # linters and hygiene checks on the whole repository (hk check --all)
 ```
 
 If you already have a global mise config with unpinned tools, `mise install --locked` may report them as missing from
 the lockfile: run `mise lock --global` once, or install the project tools with `mise install node`.
 
 `npm run check` (typecheck + Biome + tests with coverage thresholds) must pass before any commit is proposed. CI runs
-the same two things: `hk check --all` (the git hook's ruleset, on the whole repository) and `npm run test:coverage`.
+the same two things: `hk check --all` (the linters and hygiene checks, on the whole repository) and
+`npm run test:coverage`.
 Tests never touch the real sites; `npm run doctor` and `npm run test:live` do, at your own risk and only when you ask
 for it.
 
@@ -58,8 +59,9 @@ A second hook, `commit-msg`, enforces [Conventional Commits](https://www.convent
 `test/fixtures/**` is excluded from the text checks: those pages are captured from the sites, and their bytes are what
 the parsers are tested against (`npm run fixtures`).
 
-CI runs the same ruleset with `hk check --all`, minus `no_commit_to_branch`: that step is a commit-time guard, and it
-fails on `main` by design.
+CI runs the same linters and hygiene checks with `hk check --all`. The branch guard (`no_commit_to_branch`) is declared
+only in the `pre-commit` hook: it is a commit-time guard, not a property of the code, so it refuses a commit on `main`
+but does not block a full check or a CI run.
 
 The linters come from `node_modules`, not from mise: run `npm ci` first. hk itself is pinned in `mise.toml`, and its
 Pkl imports in `hk.pkl` must carry the **same version** — bumping `hk` does not rewrite those URLs, so change both by

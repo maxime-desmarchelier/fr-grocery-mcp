@@ -23,7 +23,6 @@ steps {
   ["forbid_submodules"] = Builtins.forbid_submodules
   ["mixed_line_ending"] = (Builtins.mixed_line_ending) { exclude = fixtures }
   ["newlines"] = (Builtins.newlines) { exclude = fixtures }
-  ["no_commit_to_branch"] = Builtins.no_commit_to_branch
   ["trailing_whitespace"] = (Builtins.trailing_whitespace) { exclude = fixtures }
 
   // Markdown: `.rumdl.toml` sets the line width and the two per-file exceptions.
@@ -39,6 +38,15 @@ steps {
 }
 
 hooks {
+  ["pre-commit"] {
+    fix = true
+    stage = true
+    stash = "git"
+    steps {
+      ["no_commit_to_branch"] = Builtins.no_commit_to_branch
+    }
+  }
+
   // Conventional Commits, as documented in CONTRIBUTING.md.
   ["commit-msg"] {
     steps {
