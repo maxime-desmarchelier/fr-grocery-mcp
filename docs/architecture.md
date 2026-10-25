@@ -3,7 +3,7 @@
 Hexagonal architecture: the domain depends on nothing, each layer depends only on the inner layers.
 A single MCP server, one adapter per retailer.
 
-```
+```text
 interface/mcp  ──▶  application  ──▶  domain  ◀──  infrastructure
 (MCP tools,         (service per      (model,       retailers/{superu,leclerc,memory}
  store param)        retailer,         port)        http/ (pace, retries)

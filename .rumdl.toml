@@ -1,0 +1,9 @@
+[global]
+# Same width as the code (Biome `lineWidth`) and the prose of the repository.
+line_length = 120
+
+[per-file-ignores]
+# `@AGENTS.md`: an include directive for coding agents, not a document.
+"CLAUDE.md" = ["MD041"]
+# Rendered inside the pull request body, where a level 1 heading would duplicate the title.
+".github/PULL_REQUEST_TEMPLATE.md" = ["MD041"]
