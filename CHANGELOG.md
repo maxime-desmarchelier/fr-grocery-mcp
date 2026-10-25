@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [Sem
 
 - Security policy, contribution guide, issue and pull request templates, code owners.
 - Git hooks with [hk](https://hk.jdx.dev) (`hk.pkl`): Biome and the type checker run on the files a commit touches,
-  apply their fixes and stage them.
+  apply their fixes and stage them. Repository hygiene checks (merge-conflict markers, private keys, trailing
+  whitespace, line endings, large files…) and a Conventional Commits check on the message run as well.
 
 ### Changed
 
