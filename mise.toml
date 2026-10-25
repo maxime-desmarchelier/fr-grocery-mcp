@@ -1,5 +1,10 @@
+min_version = "2026.1.0"
+
 [tools]
 node = "26"
+
+[settings]
+lockfile = true
 
 [tasks.chrome]
 description = "Debug Chrome (port 9222) on a dedicated profile, where you log in once to each site"

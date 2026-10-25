@@ -11,6 +11,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [Sem
 ### Changed
 
 - Node 26 is now the supported runtime (`engines`, CI, `mise.toml`); `@types/node` aligned on 26.x.
+- The toolchain is pinned in `mise.lock` (multi-platform) and CI installs it with `jdx/mise-action`, so the Node
+  version is declared in one place only.
 
 ## [0.1.0] - 2026-10-25
 
