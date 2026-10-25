@@ -26,6 +26,9 @@ steps {
   ["no_commit_to_branch"] = Builtins.no_commit_to_branch
   ["trailing_whitespace"] = (Builtins.trailing_whitespace) { exclude = fixtures }
 
+  // Markdown: `.rumdl.toml` sets the line width and the two per-file exceptions.
+  ["rumdl"] = Builtins.rumdl
+
   // mise.toml is formatted by mise itself.
   ["mise"] = Builtins.mise
 
