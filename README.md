@@ -117,7 +117,8 @@ Manual inspection: `npm run inspect` (MCP Inspector).
 
 ```sh
 npm ci
-npm run check                      # typecheck + lint + tests with coverage thresholds (what CI runs)
+npm run check                      # typecheck + lint + tests with coverage thresholds
+mise run lint                      # the git hook's ruleset on the whole repository (what CI runs)
 npm test                           # unit, adapter contract, integration (no access to the sites)
 npm run doctor                     # real sites, read-only: session, search, product page, cart per retailer
 npm run test:live                  # real sites: changes then removes an item that is not in the cart
