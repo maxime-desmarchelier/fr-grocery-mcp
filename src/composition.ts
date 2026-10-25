@@ -29,7 +29,7 @@ function throttledFactory(http: PageHttpFactory, minIntervalMs: number, unthrott
     let client = clients.get(origin);
     if (!client) {
       const tab = http(origin, homePath);
-      client = unthrottled ? tab : new ThrottledHttp(tab, { minIntervalMs, jitterMs: Math.round(minIntervalMs / 2) });
+      client = unthrottled ? tab : new ThrottledHttp(tab, { jitterMs: Math.round(minIntervalMs / 2), minIntervalMs });
       clients.set(origin, client);
     }
     return client;

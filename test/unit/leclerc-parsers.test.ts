@@ -24,7 +24,7 @@ const TODAY = new Date(2026, 9, 24);
 const widget = (suffix: string, options: unknown) =>
   `<script>Utilitaires.widget.initOptions('ctl00${suffix}', ${JSON.stringify(options)});</script>`;
 const STORE_PAGE = widget("_pnlCartouchePanier", {
-  objCartouchePanier: { lstElements: [{ lstEnfants: [{ objElement: { sType: "Panier", fEstVide: true } }] }] },
+  objCartouchePanier: { lstElements: [{ lstEnfants: [{ objElement: { fEstVide: true, sType: "Panier" } }] }] },
 });
 
 describe("conversions", () => {
@@ -62,12 +62,12 @@ describe("search page", () => {
     assert.deepEqual(
       spaghetti.products.find((p) => p.id === "6511"),
       {
+        available: true,
         id: "6511",
         name: "Pâtes Spaghetti Turini 1kg",
         price: 134,
-        unitPrice: { price: 134, per: "kg" },
-        available: true,
         promotions: [],
+        unitPrice: { per: "kg", price: 134 },
       },
     );
     for (const p of [...spaghetti.products, ...chocolat.products]) {
@@ -79,15 +79,15 @@ describe("search page", () => {
   it("immediate discount: deducted price, struck-through price and discounted price per kg", () => {
     const biscoff = chocolat.products.find((p) => p.id === "313406");
     assert.equal(biscoff?.price, 348);
-    assert.deepEqual(biscoff?.unitPrice, { price: 1832, per: "kg" });
+    assert.deepEqual(biscoff?.unitPrice, { per: "kg", price: 1832 });
     assert.deepEqual(biscoff?.promotions, [
       {
+        details: ["Avantage immédiat de 30%"],
         kind: "immediate",
         label: "Avantage immédiat",
-        validUntil: null,
-        details: ["Avantage immédiat de 30%"],
+        mechanic: { percent: 30, type: "percent_off" },
         regularPrice: 497,
-        mechanic: { type: "percent_off", percent: 30 },
+        validUntil: null,
       },
     ]);
   });
@@ -96,14 +96,14 @@ describe("search page", () => {
     const lindor = chocolat.products.find((p) => p.id === "10158");
     assert.equal(lindor?.price, 677);
     assert.equal(lindor?.promotions[0]?.kind, "multibuy");
-    assert.deepEqual(lindor?.promotions[0]?.mechanic, { type: "nth_percent_off", nth: 3, percent: 100 });
+    assert.deepEqual(lindor?.promotions[0]?.mechanic, { nth: 3, percent: 100, type: "nth_percent_off" });
   });
 
   it("Ticket E.Leclerc: loyalty credit", () => {
     const novi = chocolat.products.find((p) => p.id === "313711");
     assert.equal(novi?.promotions[0]?.kind, "loyalty");
     assert.equal(novi?.promotions[0]?.label, "Ticket E.Leclerc");
-    assert.deepEqual(novi?.promotions[0]?.mechanic, { type: "loyalty_percent", percent: 34 });
+    assert.deepEqual(novi?.promotions[0]?.mechanic, { percent: 34, type: "loyalty_percent" });
   });
 
   it("no result: empty list (the site's suggestions are ignored)", () => {
@@ -119,14 +119,14 @@ describe("search page", () => {
             {
               objElement: {
                 iIdProduit: 1,
-                sType: "Produit",
-                sLibelleLigne1: "Bananes",
-                nrPVUnitaireTTC: 1.99,
                 iQteDisponible: 0,
+                nrPVUnitaireTTC: 1.99,
+                sLibelleLigne1: "Bananes",
+                sType: "Produit",
               },
             },
             { objElement: { iIdProduit: 2, sType: "Publicite" } },
-            { objElement: { iIdProduit: 3, sType: "Produit", sUniteMesureTotale: "mt", nrPVParUniteDeMesureTTC: 2 } },
+            { objElement: { iIdProduit: 3, nrPVParUniteDeMesureTTC: 2, sType: "Produit", sUniteMesureTotale: "mt" } },
             { objElement: { pasUnProduit: true } },
           ],
         },
@@ -157,11 +157,11 @@ describe("cart and conditions", () => {
     assert.deepEqual(parseCartPage(200, page), {
       lines: [
         {
-          productId: "10933",
-          name: "Huile olive Eco+ Extra vierge - 1L",
-          quantity: 1,
           lineTotal: 643,
-          unitPrice: { price: 643, per: "l" },
+          name: "Huile olive Eco+ Extra vierge - 1L",
+          productId: "10933",
+          quantity: 1,
+          unitPrice: { per: "l", price: 643 },
         },
       ],
       total: 643,
@@ -176,19 +176,19 @@ describe("cart and conditions", () => {
 
   it("next pickup slot and date attached to the cart, dated", () => {
     assert.deepEqual(parseConditionsPage(200, page, TODAY), {
+      cartSlot: { end: null, label: "Lundi 26 octobre 07h00", start: "2026-10-26T07:00" },
       nextSlots: [
         {
-          mode: "drive",
-          slot: { label: "Lundi 26 octobre à 07h00", start: "2026-10-26T07:00", end: null },
           available: true,
           full: false,
+          mode: "drive",
+          slot: { end: null, label: "Lundi 26 octobre à 07h00", start: "2026-10-26T07:00" },
         },
       ],
-      cartSlot: { label: "Lundi 26 octobre 07h00", start: "2026-10-26T07:00", end: null },
     });
     assert.deepEqual(parseConditionsPage(200, STORE_PAGE, TODAY), {
-      nextSlots: [{ mode: "drive", slot: null, available: false, full: false }],
       cartSlot: null,
+      nextSlots: [{ available: false, full: false, mode: "drive", slot: null }],
     });
   });
 });
@@ -198,10 +198,10 @@ describe("product page", () => {
 
   it("reads ingredients (prefix removed) and declared allergens", () => {
     assert.deepEqual(parseProductPage(200, fixture("product-barilla.html"), id("7459")), {
-      id: "7459",
-      name: "Pâtes Barilla Spaghetti n°5 - 500g",
-      ingredients: "Semoule de BLÉ dur. Peut contenir des traces de SOJA et de MOUTARDE.",
       allergens: "Contient : céréales contenant du gluten ; Traces de : soja , moutarde ; blé",
+      id: "7459",
+      ingredients: "Semoule de BLÉ dur. Peut contenir des traces de SOJA et de MOUTARDE.",
+      name: "Pâtes Barilla Spaghetti n°5 - 500g",
       origin: null,
     });
   });
@@ -248,13 +248,13 @@ describe("store search", () => {
     });
     const stores = parseNearby(200, fixture("locator-nearby.json"));
     assert.deepEqual(stores[0], {
+      distanceKm: 0.1,
+      host: "fd7-courses.leclercdrive.fr",
       id: "123456",
       name: "Testville Centre",
-      serviceType: "drive",
-      distanceKm: 0.1,
       postalCode: "00000",
       retrievalPointId: "123456",
-      host: "fd7-courses.leclercdrive.fr",
+      serviceType: "drive",
     });
     const relay = stores.find((s) => s.serviceType === "relay");
     assert.equal(relay?.id, "123459-000582", "walk-in pickup point: delivery point and pickup point");

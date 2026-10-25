@@ -11,18 +11,18 @@ import { InMemoryStore } from "../../src/infrastructure/retailers/memory/in-memo
 import { BOEUF, CATALOGUE, SPAGHETTI } from "../support/catalogue.ts";
 
 const conditions = (minimum: number | null): OrderConditions => ({
-  store: "store",
   bookedSlot: null,
   cartSlot: null,
+  minimumOrders: minimum === null ? null : [{ amount: fromCents(minimum), mode: "drive" }],
   nextSlots: [
     {
-      mode: "drive",
-      slot: { label: "Lundi 26 octobre à 07h00", start: "2026-10-26T07:00", end: null },
       available: true,
       full: false,
+      mode: "drive",
+      slot: { end: null, label: "Lundi 26 octobre à 07h00", start: "2026-10-26T07:00" },
     },
   ],
-  minimumOrders: minimum === null ? null : [{ mode: "drive", amount: fromCents(minimum) }],
+  store: "store",
 });
 
 function registry(...stores: { id: string; store: InMemoryStore }[]) {

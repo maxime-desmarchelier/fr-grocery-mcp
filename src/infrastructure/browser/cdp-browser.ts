@@ -115,7 +115,7 @@ export class CdpTab implements PageHttp {
 
   async #evaluate(expression: string): Promise<unknown> {
     await this.#connect();
-    const response = await this.#send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+    const response = await this.#send("Runtime.evaluate", { awaitPromise: true, expression, returnByValue: true });
     const exception = response.result?.exceptionDetails;
     if (exception) throw new TransientError(`Error in page ${this.origin}: ${exception.text}`);
     return response.result?.result?.value;
@@ -159,10 +159,10 @@ export class CdpTab implements PageHttp {
   async #target(): Promise<{ target: CdpTarget; created: boolean }> {
     const host = new URL(this.origin).host;
     const existing = (await this.#browser.targets()).find((t) => t.type === "page" && hostOf(t.url) === host);
-    if (existing) return { target: existing, created: false };
+    if (existing) return { created: false, target: existing };
     // No tab for the site: open one, reusing the Chrome profile's session.
     try {
-      return { target: await this.#browser.openTab(this.origin + this.#homePath), created: true };
+      return { created: true, target: await this.#browser.openTab(this.origin + this.#homePath) };
     } catch {
       throw new SessionExpiredError(host, `no ${host} tab open in Chrome. Open the site, log in, then retry.`);
     }
@@ -179,14 +179,14 @@ export class CdpTab implements PageHttp {
         reject(new TransientError(`Timed out on ${method} (${timeoutMs} ms).`));
       }, timeoutMs);
       this.#pending.set(id, {
+        reject: (e) => {
+          clearTimeout(timer);
+          reject(e);
+        },
         resolve: (r) => {
           clearTimeout(timer);
           if (r.error) reject(new TransientError(`CDP ${method}: ${r.error.message}`));
           else resolve(r);
-        },
-        reject: (e) => {
-          clearTimeout(timer);
-          reject(e);
         },
       });
       ws.send(JSON.stringify({ id, method, params }));

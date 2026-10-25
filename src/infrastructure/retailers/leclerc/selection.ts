@@ -5,13 +5,13 @@ import { dirname } from "node:path";
 import { z } from "zod";
 
 export const leclercSelectionSchema = z.object({
-  /** Delivery point (noPL), e.g. "123456". */
-  storeId: z.string().regex(/^\d{6}$/),
-  /** Pickup point (noPR): equal to storeId for a drive, different for a walk-in pickup point. */
-  retrievalPointId: z.string().regex(/^\d{6}$/),
   /** The store's shopping host, e.g. "fd7-courses.leclercdrive.fr" (the number varies by store). */
   host: z.string().regex(/^fd\d+-courses\.leclercdrive\.fr$/),
   name: z.string().min(1).optional(),
+  /** Pickup point (noPR): equal to storeId for a drive, different for a walk-in pickup point. */
+  retrievalPointId: z.string().regex(/^\d{6}$/),
+  /** Delivery point (noPL), e.g. "123456". */
+  storeId: z.string().regex(/^\d{6}$/),
 });
 
 export type LeclercSelection = z.infer<typeof leclercSelectionSchema>;

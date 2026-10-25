@@ -11,6 +11,10 @@ export interface SlotTime {
   readonly end: LocalDateTime | null;
 }
 
+const CLOCK_TIME = /^(\d{1,2})h(\d{2})?$/;
+const CLOCK_TIME_ANYWHERE = /\b(\d{1,2}h(?:\d{2})?)\b/g;
+const NUMERIC_DATE = /\b(\d{1,2})\/(\d{1,2})\b/;
+
 const MONTHS = [
   "janvier",
   "fevrier",
@@ -37,7 +41,7 @@ function yearFor(month: number, day: number, reference: Date): number {
 }
 
 function at(year: number, month: number, day: number, time: string | undefined): LocalDateTime | null {
-  const m = time?.match(/^(\d{1,2})h(\d{2})?$/);
+  const m = time?.match(CLOCK_TIME);
   if (!m) return null;
   const hours = Number(m[1]);
   const minutes = Number(m[2] ?? 0);
@@ -48,18 +52,18 @@ function at(year: number, month: number, day: number, time: string | undefined):
 /** Interprets a slot label; start and end are null if the format is unknown. */
 export function parseSlotLabel(label: string, reference: Date): SlotTime {
   const text = label.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
-  const times = [...text.matchAll(/\b(\d{1,2}h(?:\d{2})?)\b/g)].map((m) => m[1]);
+  const times = [...text.matchAll(CLOCK_TIME_ANYWHERE)].map((m) => m[1]);
 
   let day: number | null = null;
   let month: number | null = null;
-  const numeric = text.match(/\b(\d{1,2})\/(\d{1,2})\b/);
+  const numeric = text.match(NUMERIC_DATE);
   const spelled = text.match(new RegExp(`\\b(\\d{1,2}) (${MONTHS.join("|")})\\b`));
   if (numeric) [day, month] = [Number(numeric[1]), Number(numeric[2])];
   else if (spelled?.[2]) [day, month] = [Number(spelled[1]), MONTHS.indexOf(spelled[2]) + 1];
 
   if (day === null || month === null || month < 1 || month > 12 || day < 1 || day > 31) {
-    return { label, start: null, end: null };
+    return { end: null, label, start: null };
   }
   const year = yearFor(month, day, reference);
-  return { label, start: at(year, month, day, times[0]), end: at(year, month, day, times[1]) };
+  return { end: at(year, month, day, times[1]), label, start: at(year, month, day, times[0]) };
 }

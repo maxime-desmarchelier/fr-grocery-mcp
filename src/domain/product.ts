@@ -2,6 +2,8 @@ import { ValidationError } from "./errors.ts";
 import type { Money } from "./money.ts";
 import type { Promotion } from "./promotion.ts";
 
+const PRODUCT_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+
 declare const productId: unique symbol;
 /** Retailer-specific product identifier ("960853" at Super U, "7459" at Leclerc). */
 export type ProductId = string & { readonly [productId]: true };
@@ -9,7 +11,7 @@ export type ProductId = string & { readonly [productId]: true };
 /** Shape shared by all retailers; each adapter also checks its own format. */
 export function parseProductId(raw: string): ProductId {
   const value = raw.trim();
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value)) {
+  if (!PRODUCT_ID.test(value)) {
     throw new ValidationError(`Invalid product identifier: "${raw}"`);
   }
   return value as ProductId;

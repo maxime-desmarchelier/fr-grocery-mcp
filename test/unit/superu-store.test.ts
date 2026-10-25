@@ -55,14 +55,14 @@ describe("SuperUStore", () => {
     const conditions = await new SuperUStore(http, { today: () => new Date(2026, 9, 24) }).getOrderConditions();
     assert.equal(conditions.store, "super u ville test");
     assert.deepEqual(conditions.bookedSlot, {
+      end: "2026-10-25T09:00",
       label: "Dim. 25/10 de 08h30 à 09h00",
       start: "2026-10-25T08:30",
-      end: "2026-10-25T09:00",
     });
     assert.equal(conditions.cartSlot, null);
     assert.deepEqual(conditions.minimumOrders, [
-      { mode: "drive", amount: 5000 },
-      { mode: "delivery", amount: 5000 },
+      { amount: 5000, mode: "drive" },
+      { amount: 5000, mode: "delivery" },
     ]);
     assert.match(http.requests[0]?.url ?? "", /Home-IncludeNavigationSlotTimeInfo$/);
     assert.ok(
@@ -100,7 +100,7 @@ describe("SuperUStore", () => {
     const http = new FakeHttp((path) => {
       if (path === "/panier") return ok(fixture("cart.html"));
       posts++;
-      return { status: 500, body: "" };
+      return { body: "", status: 500 };
     });
     const store = new SuperUStore(http);
     await assert.rejects(store.setQuantity(parseProductId("1"), parseQuantity(1)), TransientError);
@@ -110,7 +110,7 @@ describe("SuperUStore", () => {
   });
 
   it("quantity: anti-bot block", async () => {
-    const http = new FakeHttp((path) => (path === "/panier" ? ok(fixture("cart.html")) : { status: 403, body: "" }));
+    const http = new FakeHttp((path) => (path === "/panier" ? ok(fixture("cart.html")) : { body: "", status: 403 }));
     await assert.rejects(new SuperUStore(http).setQuantity(parseProductId("1"), parseQuantity(1)), SiteBlockedError);
   });
 

@@ -39,18 +39,18 @@ const TOOLS = [
 ];
 
 const CONDITIONS: OrderConditions = {
-  store: "super u ville test",
-  bookedSlot: { label: "Dim. 25/10 de 08h30 à 09h00", start: "2026-10-25T08:30", end: "2026-10-25T09:00" },
+  bookedSlot: { end: "2026-10-25T09:00", label: "Dim. 25/10 de 08h30 à 09h00", start: "2026-10-25T08:30" },
   cartSlot: null,
+  minimumOrders: [{ amount: fromCents(5000), mode: "drive" }],
   nextSlots: [
     {
-      mode: "drive",
-      slot: { label: "Dimanche 25 octobre à 08h00", start: "2026-10-25T08:00", end: null },
       available: true,
       full: false,
+      mode: "drive",
+      slot: { end: null, label: "Dimanche 25 octobre à 08h00", start: "2026-10-25T08:00" },
     },
   ],
-  minimumOrders: [{ mode: "drive", amount: fromCents(5000) }],
+  store: "super u ville test",
 };
 
 function simulated() {
@@ -59,14 +59,14 @@ function simulated() {
     details: new Map([[SPAGHETTI.id, { ingredients: "Semoule de blé dur (GLUTEN).", origin: "France" }]]),
   });
   const leclerc = new InMemoryStore(CATALOGUE, {
-    locations: [{ id: "123456", name: "Testville", serviceType: "drive", distanceKm: 1, postalCode: "00000" }],
+    locations: [{ distanceKm: 1, id: "123456", name: "Testville", postalCode: "00000", serviceType: "drive" }],
   });
   const service = (store: InMemoryStore) => new ShoppingService(store, { sleep: async () => {} });
   const registry = new StoreRegistry([
     { id: "leclerc", name: "E.Leclerc Drive", service: service(leclerc) },
     { id: "superu", name: "Super U", service: service(superu) },
   ]);
-  return { registry, superu, leclerc };
+  return { leclerc, registry, superu };
 }
 
 async function connect(registry: StoreRegistry) {
@@ -75,12 +75,12 @@ async function connect(registry: StoreRegistry) {
   const client = new Client({ name: "test", version: "0" });
   await client.connect(clientSide);
   const call = async (name: string, args: Record<string, unknown> = {}) => {
-    const result = (await client.callTool({ name, arguments: args })) as CallToolResult;
+    const result = (await client.callTool({ arguments: args, name })) as CallToolResult;
     const text = result.content[0]?.type === "text" ? result.content[0].text : "";
     // biome-ignore lint/suspicious/noExplicitAny: free-form reading of JSON results in assertions
-    return { result, data: JSON.parse(text) as any };
+    return { data: JSON.parse(text) as any, result };
   };
-  return { client, call };
+  return { call, client };
 }
 
 describe("MCP server (simulated retailers)", () => {
@@ -115,30 +115,30 @@ describe("MCP server (simulated retailers)", () => {
   it('"spaghetti bolognese for 4" flow on one retailer: search, additions, adjustment, removal', async () => {
     const { client, call } = await connect(simulated().registry);
 
-    const pates = await call("search_products", { store: "superu", query: "spaghetti" });
+    const pates = await call("search_products", { query: "spaghetti", store: "superu" });
     assert.deepEqual(pates.result.structuredContent, pates.data, "text and structured content match");
     assert.equal(pates.data.store, "superu");
     assert.equal(pates.data.products[0].price_eur, 0.95);
     assert.deepEqual(pates.data.products[0].unit_price, { eur: 1.9, per: "kg" });
     assert.equal(pates.data.products[0].best_offer, null, "no promotion: no offer");
 
-    const mozza = await call("search_products", { store: "superu", query: "mozzarella" });
+    const mozza = await call("search_products", { query: "mozzarella", store: "superu" });
     assert.equal(mozza.data.products[0].available, false, "the agent sees the shortage before adding");
 
-    await call("add_to_cart", { store: "superu", product_id: "960853", quantity: 1 });
-    let r = await call("add_to_cart", { store: "superu", product_id: "960853" });
+    await call("add_to_cart", { product_id: "960853", quantity: 1, store: "superu" });
+    let r = await call("add_to_cart", { product_id: "960853", store: "superu" });
     assert.equal(r.data.expected_quantity, 2);
     assert.equal(r.data.confirmed, true);
 
-    await call("add_to_cart", { store: "superu", product_id: "2307081", quantity: 2 });
-    r = await call("set_quantity", { store: "superu", product_id: "2307081", quantity: 1 });
+    await call("add_to_cart", { product_id: "2307081", quantity: 2, store: "superu" });
+    r = await call("set_quantity", { product_id: "2307081", quantity: 1, store: "superu" });
     assert.equal(r.data.line.quantity, 1);
 
     const cart = await call("get_cart", { store: "superu" });
     assert.equal(cart.data.total_eur, 10.89, "0,95 × 2 + 8,99");
     assert.deepEqual((await call("get_cart", { store: "leclerc" })).data.lines, [], "separate carts");
 
-    r = await call("remove_from_cart", { store: "superu", product_id: "2307081" });
+    r = await call("remove_from_cart", { product_id: "2307081", store: "superu" });
     assert.equal(r.data.line, null);
     await client.close();
   });
@@ -149,23 +149,23 @@ describe("MCP server (simulated retailers)", () => {
     assert.deepEqual(one.result.structuredContent, one.data);
     assert.deepEqual(one.data.stores, [
       {
-        store: "superu",
-        name: "Super U",
         conditions: {
-          store: "super u ville test",
-          booked_slot: { label: "Dim. 25/10 de 08h30 à 09h00", start: "2026-10-25T08:30", end: "2026-10-25T09:00" },
+          booked_slot: { end: "2026-10-25T09:00", label: "Dim. 25/10 de 08h30 à 09h00", start: "2026-10-25T08:30" },
           cart_slot: null,
+          minimum_orders: [{ eur: 50, mode: "drive" }],
           next_slots: [
             {
-              mode: "drive",
-              slot: { label: "Dimanche 25 octobre à 08h00", start: "2026-10-25T08:00", end: null },
               available: true,
               full: false,
+              mode: "drive",
+              slot: { end: null, label: "Dimanche 25 octobre à 08h00", start: "2026-10-25T08:00" },
             },
           ],
-          minimum_orders: [{ mode: "drive", eur: 50 }],
+          store: "super u ville test",
         },
         failure: null,
+        name: "Super U",
+        store: "superu",
       },
     ]);
     const all = await call("get_order_conditions");
@@ -183,29 +183,29 @@ describe("MCP server (simulated retailers)", () => {
 
     const quick = await call("list_stores");
     assert.deepEqual(quick.data.stores[0], {
-      store: "leclerc",
-      name: "E.Leclerc Drive",
-      capabilities: { product_details: true, store_locator: true, minimum_order: false, booked_slot: true },
-      session_ok: null,
+      capabilities: { booked_slot: true, minimum_order: false, product_details: true, store_locator: true },
       current_store: null,
       failure: null,
+      name: "E.Leclerc Drive",
+      session_ok: null,
+      store: "leclerc",
     });
     const checked = await call("list_stores", { check: true });
     assert.equal(checked.data.stores[1].session_ok, true);
     assert.equal(checked.data.stores[1].current_store, "super u ville test");
 
-    const found = await call("find_stores", { store: "leclerc", query: "00000" });
+    const found = await call("find_stores", { query: "00000", store: "leclerc" });
     assert.deepEqual(found.data.locations, [
-      { id: "123456", name: "Testville", service_type: "drive", distance_km: 1, postal_code: "00000" },
+      { distance_km: 1, id: "123456", name: "Testville", postal_code: "00000", service_type: "drive" },
     ]);
     const set = await call("set_store", { store: "leclerc", store_id: "123456" });
     assert.equal(set.data.selected.name, "Testville");
     assert.equal(leclerc.selected?.id, "123456");
-    const unsupported = await call("find_stores", { store: "superu", query: "00000" });
+    const unsupported = await call("find_stores", { query: "00000", store: "superu" });
     assert.equal(unsupported.data.error, "NotSupportedError");
 
-    await call("add_to_cart", { store: "leclerc", product_id: BOEUF.id });
-    await call("add_to_cart", { store: "superu", product_id: SPAGHETTI.id, quantity: 3 });
+    await call("add_to_cart", { product_id: BOEUF.id, store: "leclerc" });
+    await call("add_to_cart", { product_id: SPAGHETTI.id, quantity: 3, store: "superu" });
     const comparison = await call("compare_carts");
     assert.deepEqual(comparison.result.structuredContent, comparison.data);
     assert.equal(comparison.data.cheapest, "superu");
@@ -226,16 +226,16 @@ describe("MCP server (simulated retailers)", () => {
 
   it("product page: ingredients and origin, null for a raw product", async () => {
     const { client, call } = await connect(simulated().registry);
-    const pasta = await call("get_product", { store: "superu", product_id: SPAGHETTI.id });
+    const pasta = await call("get_product", { product_id: SPAGHETTI.id, store: "superu" });
     assert.deepEqual(pasta.data, {
-      store: "superu",
-      id: "960853",
-      name: SPAGHETTI.name,
-      ingredients: "Semoule de blé dur (GLUTEN).",
       allergens: null,
+      id: "960853",
+      ingredients: "Semoule de blé dur (GLUTEN).",
+      name: SPAGHETTI.name,
       origin: "France",
+      store: "superu",
     });
-    assert.equal((await call("get_product", { store: "superu", product_id: BOEUF.id })).data.ingredients, null);
+    assert.equal((await call("get_product", { product_id: BOEUF.id, store: "superu" })).data.ingredients, null);
     await client.close();
   });
 
@@ -243,19 +243,19 @@ describe("MCP server (simulated retailers)", () => {
     const { registry, superu } = simulated();
     const { client, call } = await connect(registry);
 
-    const unknownStore = await client.callTool({ name: "get_cart", arguments: { store: "carrefour" } });
+    const unknownStore = await client.callTool({ arguments: { store: "carrefour" }, name: "get_cart" });
     assert.equal(unknownStore.isError, true, "retailer refused by the input schema");
 
-    const badId = await call("add_to_cart", { store: "superu", product_id: "../panier" });
+    const badId = await call("add_to_cart", { product_id: "../panier", store: "superu" });
     assert.equal(badId.data.error, "ValidationError");
 
     const tooMany = await client.callTool({
+      arguments: { product_id: "960853", quantity: 500, store: "superu" },
       name: "set_quantity",
-      arguments: { store: "superu", product_id: "960853", quantity: 500 },
     });
     assert.equal(tooMany.isError, true, "cap refused by the input schema");
 
-    assert.equal((await call("add_to_cart", { store: "superu", product_id: "123" })).data.error, "ValidationError");
+    assert.equal((await call("add_to_cart", { product_id: "123", store: "superu" })).data.error, "ValidationError");
 
     superu.expired = true;
     const expired = await call("get_cart", { store: "superu" });
@@ -280,10 +280,10 @@ describe("MCP server (real adapters, simulated sites)", () => {
           {
             retailer: "leclerc",
             store: {
-              storeId: "123456",
-              retrievalPointId: "123456",
               host: "fd7-courses.leclercdrive.fr",
               name: "Testville",
+              retrievalPointId: "123456",
+              storeId: "123456",
             },
           },
           { retailer: "superu" },
@@ -292,20 +292,20 @@ describe("MCP server (real adapters, simulated sites)", () => {
     );
     const http = (origin: string) => new FakeHttp(origin.includes("coursesu") ? superuSite : leclercSite);
     const registry = buildRegistry(config, http, {
-      unthrottled: true,
-      service: { sleep: async () => {} },
       selection: (fallback) => new MemorySelection(fallback),
+      service: { sleep: async () => {} },
+      unthrottled: true,
     });
     const { client, call } = await connect(registry);
 
-    const lessive = await call("search_products", { store: "superu", query: "spaghetti", limit: 18 });
+    const lessive = await call("search_products", { limit: 18, query: "spaghetti", store: "superu" });
     const carteU = lessive.data.products.find((p: { id: string }) => p.id === "1177214");
     assert.equal(carteU.promotions[0].kind, "loyalty");
     assert.deepEqual(carteU.promotions[0].mechanic, {
-      type: "loyalty_amount",
+      amount_eur: 0.27,
       nth: null,
       percent: null,
-      amount_eur: 0.27,
+      type: "loyalty_amount",
     });
     assert.ok(carteU.best_offer.net_unit_price_eur < carteU.price_eur);
 
@@ -327,8 +327,8 @@ describe("MCP server (stdio)", () => {
     const client = new Client({ name: "test", version: "0" });
     await client.connect(
       new StdioClientTransport({
-        command: process.execPath,
         args: [fileURLToPath(new URL("../../src/main.ts", import.meta.url))],
+        command: process.execPath,
         stderr: "ignore",
       }),
     );

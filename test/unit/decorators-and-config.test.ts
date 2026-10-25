@@ -50,11 +50,11 @@ describe("withRetry", () => {
 describe("RetryingStore", () => {
   it("delegates every method to the decorated store", async () => {
     const location = {
+      distanceKm: null,
       id: "1",
       name: "Testville",
-      serviceType: "drive",
-      distanceKm: null,
       postalCode: "00000",
+      serviceType: "drive",
     } as const;
     const inner = new InMemoryStore(CATALOGUE, { locations: [location] });
     const store = new RetryingStore(inner);
@@ -74,8 +74,8 @@ describe("ThrottledHttp", () => {
     let clock = 1000;
     const sleeps: number[] = [];
     const http = new ThrottledHttp(new FakeHttp(() => ok("")), {
-      minIntervalMs: 500,
       jitterMs: 100,
+      minIntervalMs: 500,
       now: () => clock,
       random: () => 0.5,
       sleep: async (ms) => {
@@ -93,7 +93,7 @@ describe("ThrottledHttp", () => {
         if (url === "/ko") throw new TransientError("network");
         return ok("fini");
       }),
-      { minIntervalMs: 0, jitterMs: 0, sleep: async () => {} },
+      { jitterMs: 0, minIntervalMs: 0, sleep: async () => {} },
     );
     await assert.rejects(http.request("/ko"), TransientError);
     assert.equal((await http.request("/ok")).body, "fini");
@@ -101,13 +101,13 @@ describe("ThrottledHttp", () => {
 });
 
 describe("loadConfig", () => {
-  const leclerc = { storeId: "123456", retrievalPointId: "123456", host: "fd7-courses.leclercdrive.fr" };
+  const leclerc = { host: "fd7-courses.leclercdrive.fr", retrievalPointId: "123456", storeId: "123456" };
 
   it("without a file: Super U only, Chrome 9222", () => {
     const config = loadConfig({});
     assert.equal(config.chromePort, 9222);
     assert.equal(config.timeoutMs, 30_000);
-    assert.deepEqual(config.stores, [{ retailer: "superu", minIntervalMs: 300 }]);
+    assert.deepEqual(config.stores, [{ minIntervalMs: 300, retailer: "superu" }]);
     assert.match(config.stateDir, /\.fr-grocery-mcp$/);
   });
 
@@ -124,7 +124,7 @@ describe("loadConfig", () => {
       ["leclerc", "superu"],
     );
     assert.equal(
-      loadConfig({ FR_GROCERY_CONFIG: "/c.json", FR_GROCERY_CHROME_PORT: "9444" }, () => file).chromePort,
+      loadConfig({ FR_GROCERY_CHROME_PORT: "9444", FR_GROCERY_CONFIG: "/c.json" }, () => file).chromePort,
       9444,
     );
   });
