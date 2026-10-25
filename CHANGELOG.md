@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [Sem
 ### Added
 
 - Security policy, contribution guide, issue and pull request templates, code owners.
+- Git hooks with [hk](https://hk.jdx.dev) (`hk.pkl`): Biome and the type checker run on the files a commit touches,
+  apply their fixes and stage them.
 
 ### Changed
 
