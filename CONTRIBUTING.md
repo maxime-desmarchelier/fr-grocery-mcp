@@ -68,6 +68,16 @@ matter in review:
 - Relative imports with the `.ts` extension. No `enum`, `namespace` or parameter properties (`erasableSyntaxOnly`).
 - Amounts are `Money` (cents) throughout; euros only in the presenters.
 - External data (a site's JSON, the configuration) is validated by a zod schema.
+- Biome is stricter than its default preset: type-aware rules (`domains.types`), `noFloatingPromises`, `noMisusedPromises`,
+  `noUndeclaredDependencies`, `useTopLevelRegex`, and object keys sorted (`assist.source.useSortedKeys`). A new rule is
+  either green or not enabled.
+- Four lint choices are deliberate and should not be "fixed" without discussing them:
+  - `useTopLevelRegex` is off under `test/**`: hoisting a regex out of an assertion only hurts readability.
+  - `useAwait` is not enabled: the `GroceryStore` port is asynchronous, so `async` methods without I/O are normal
+    (the in-memory store, the fakes). `noFloatingPromises` covers the mistake that actually matters.
+  - `noSecrets` is not enabled: it flags domain strings and fixtures. GitHub secret scanning and push protection,
+    plus the `detect_private_key` hook, play that role.
+  - `useLiteralKeys` stays off: `noPropertyAccessFromIndexSignature` makes `record["key"]` mandatory for index signatures.
 
 ## Adding or fixing a retailer
 

@@ -19,6 +19,8 @@ import {
 export const SUPERU_ORIGIN = "https://www.coursesu.com";
 export const SUPERU_HOME_PATH = "/drive/home";
 
+const SUPERU_PRODUCT_ID = /^\d{1,20}$/;
+
 const SET_QUANTITY_PATH = "/on/demandware.store/Sites-DigitalU-Site/fr_FR/Cart-AddProduct?format=ajax";
 const SLOT_INFO_PATH = "/on/demandware.store/Sites-DigitalU-Site/fr_FR/Home-IncludeNavigationSlotTimeInfo";
 const PAGE_SIZE = 18;
@@ -26,7 +28,7 @@ const MAX_PAGES = 10;
 
 /** Super U identifiers are numeric; any other format would end up in a URL or a form. */
 function assertSuperUId(id: ProductId): void {
-  if (!/^\d{1,20}$/.test(id))
+  if (!SUPERU_PRODUCT_ID.test(id))
     throw new ValidationError(`Invalid Super U product identifier: "${id}" (numeric expected).`);
 }
 
@@ -37,10 +39,10 @@ export interface SuperUStoreOptions {
 
 export class SuperUStore implements GroceryStore {
   readonly capabilities: StoreCapabilities = {
+    bookedSlot: true,
+    minimumOrder: true,
     productDetails: true,
     storeLocator: false,
-    minimumOrder: true,
-    bookedSlot: true,
   };
   readonly #http: PageHttp;
   readonly #today: () => Date;
@@ -65,7 +67,7 @@ export class SuperUStore implements GroceryStore {
       for (const p of result.products) if (!products.has(p.id)) products.set(p.id, p);
       if (products.size >= total) break;
     }
-    return { query, total, products: [...products.values()].slice(0, limit) };
+    return { products: [...products.values()].slice(0, limit), query, total };
   }
 
   /** Product page: the site ignores the URL label, only the identifier matters. */
@@ -96,30 +98,30 @@ export class SuperUStore implements GroceryStore {
     if (!this.#csrfToken) await this.getCart();
     if (!this.#csrfToken) throw new TransientError("CSRF token not found on the cart page.");
     const form = new URLSearchParams({
+      csrf_token: this.#csrfToken,
+      fullview: "true",
+      isLuckyProduct: "false",
+      location: "search",
+      modifiableOrderID: "",
+      operationId: "",
+      pageId: "",
+      pageType: "Search result",
       pid: id,
       Quantity: String(quantity),
       quantity: String(quantity),
-      update: "true",
-      modifiableOrderID: "",
-      fullview: "true",
-      location: "search",
       requestedQuantity: "",
-      isLuckyProduct: "false",
-      pageId: "",
-      pageType: "Search result",
-      operationId: "",
-      sponsoringType: "",
       sponsoringCampaignId: "",
-      csrf_token: this.#csrfToken,
+      sponsoringType: "",
+      update: "true",
     });
     const { status, body } = await this.#http.request(SET_QUANTITY_PATH, {
-      method: "POST",
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        Accept: "application/json, text/javascript, */*; q=0.01",
-      },
       body: form.toString(),
+      headers: {
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      method: "POST",
     });
     assertNotBlocked(status, body);
     if (status < 200 || status >= 300) {

@@ -10,8 +10,8 @@ import { leclercSelectionSchema } from "./infrastructure/retailers/leclerc/selec
 const interval = (ms: number) => z.number().int().min(0).max(60_000).default(ms);
 
 const storeSchema = z.discriminatedUnion("retailer", [
-  z.object({ retailer: z.literal("superu"), minIntervalMs: interval(300) }),
-  z.object({ retailer: z.literal("leclerc"), store: leclercSelectionSchema, minIntervalMs: interval(1000) }),
+  z.object({ minIntervalMs: interval(300), retailer: z.literal("superu") }),
+  z.object({ minIntervalMs: interval(1000), retailer: z.literal("leclerc"), store: leclercSelectionSchema }),
 ]);
 
 const fileSchema = z.object({
@@ -29,9 +29,9 @@ const fileSchema = z.object({
 });
 
 const envSchema = z.object({
+  FR_GROCERY_CHROME_PORT: z.coerce.number().int().min(1).max(65_535).optional(),
   FR_GROCERY_CONFIG: z.string().min(1).optional(),
   FR_GROCERY_STATE_DIR: z.string().min(1).optional(),
-  FR_GROCERY_CHROME_PORT: z.coerce.number().int().min(1).max(65_535).optional(),
 });
 
 export type StoreConfig = z.infer<typeof storeSchema>;
@@ -67,8 +67,8 @@ export function loadConfig(
 
   return {
     chromePort: port ?? file.data.chrome.port,
-    timeoutMs: file.data.chrome.timeoutMs,
     stateDir: stateDir ?? join(homedir(), ".fr-grocery-mcp"),
     stores: file.data.stores,
+    timeoutMs: file.data.chrome.timeoutMs,
   };
 }

@@ -20,6 +20,8 @@ import {
 } from "./parsers.ts";
 import type { LeclercSelection, SelectionRepository } from "./selection.ts";
 
+const LECLERC_PRODUCT_ID = /^\d{1,12}$/;
+
 export const LOCATOR_ORIGIN = "https://www.leclercdrive.fr";
 const LOCATOR_API = "https://api-recherchemagasins.leclercdrive.fr/API_RechercheMagasins/api/v1";
 
@@ -30,7 +32,7 @@ const ACTION_DECREASE = 2;
 const CART_FRESHNESS_MS = 15_000;
 
 function assertLeclercId(id: ProductId): void {
-  if (!/^\d{1,12}$/.test(id))
+  if (!LECLERC_PRODUCT_ID.test(id))
     throw new ValidationError(`Invalid Leclerc product identifier: "${id}" (numeric expected).`);
 }
 
@@ -42,10 +44,10 @@ export interface LeclercStoreOptions {
 
 export class LeclercStore implements GroceryStore {
   readonly capabilities: StoreCapabilities = {
+    bookedSlot: false,
+    minimumOrder: false,
     productDetails: true,
     storeLocator: true,
-    minimumOrder: false,
-    bookedSlot: false,
   };
   readonly #http: PageHttpFactory;
   readonly #selection: SelectionRepository;
@@ -62,7 +64,7 @@ export class LeclercStore implements GroceryStore {
   async search(query: string, limit: number): Promise<SearchResult> {
     const { status, body } = await this.#get(`/recherche.aspx?TexteRecherche=${encodeURIComponent(query)}`);
     const page = parseSearchPage(status, body);
-    return { query, total: page.total, products: page.products.slice(0, limit) };
+    return { products: page.products.slice(0, limit), query, total: page.total };
   }
 
   /** The URL label is cosmetic: only the identifier matters. */
@@ -85,11 +87,11 @@ export class LeclercStore implements GroceryStore {
     const page = parseConditionsPage(status, body, this.#now());
     const selection = this.#selection.current();
     return {
-      store: selection.name ?? `store ${selection.storeId}`,
       bookedSlot: null,
       cartSlot: page.cartSlot,
-      nextSlots: page.nextSlots,
       minimumOrders: null,
+      nextSlots: page.nextSlots,
+      store: selection.name ?? `store ${selection.storeId}`,
     };
   }
 
@@ -107,13 +109,13 @@ export class LeclercStore implements GroceryStore {
     };
     this.#lastCart = null;
     const { status, body } = await this.#client().request(`${basePath(selection)}/panier.aspx?op=1`, {
-      method: "POST",
+      body: `d=${encodeURIComponent(JSON.stringify(payload))}`,
       headers: {
+        Accept: "application/json, text/javascript, */*; q=0.01",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "X-Requested-With": "XMLHttpRequest",
-        Accept: "application/json, text/javascript, */*; q=0.01",
       },
-      body: `d=${encodeURIComponent(JSON.stringify(payload))}`,
+      method: "POST",
     });
     assertMutationAccepted(status, body);
   }
@@ -146,10 +148,10 @@ export class LeclercStore implements GroceryStore {
     if (!found) throw new ValidationError(`Unknown store ${id}: run find_stores first, then pick an id from the list.`);
     const [storeId = id] = id.split("-");
     const selection: LeclercSelection = {
-      storeId,
-      retrievalPointId: found.retrievalPointId,
       host: found.host,
       name: found.name,
+      retrievalPointId: found.retrievalPointId,
+      storeId,
     };
     this.#selection.save(selection);
     this.#lastCart = null;

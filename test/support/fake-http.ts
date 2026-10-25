@@ -6,7 +6,7 @@ import type { HttpRequest, HttpResponse, PageHttp } from "../../src/infrastructu
 export const fixture = (retailer: "superu" | "leclerc", name: string): string =>
   readFileSync(new URL(`../fixtures/${retailer}/${name}`, import.meta.url), "utf8");
 
-export const ok = (body: string): HttpResponse => ({ status: 200, body });
+export const ok = (body: string): HttpResponse => ({ body, status: 200 });
 
 export class FakeHttp implements PageHttp {
   readonly requests: { url: string; init: HttpRequest | undefined }[] = [];
@@ -17,7 +17,7 @@ export class FakeHttp implements PageHttp {
   }
 
   async request(url: string, init?: HttpRequest): Promise<HttpResponse> {
-    this.requests.push({ url, init });
+    this.requests.push({ init, url });
     return this.#routes(url, init);
   }
 

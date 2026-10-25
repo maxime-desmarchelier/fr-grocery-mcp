@@ -16,13 +16,13 @@ const noSleep = async () => {};
 function delegate(inner: InMemoryStore, overrides: Partial<GroceryStore>): GroceryStore {
   return {
     capabilities: inner.capabilities,
-    search: (query, limit) => inner.search(query, limit),
-    getProduct: (id) => inner.getProduct(id),
-    getCart: () => inner.getCart(),
-    setQuantity: (id, quantity) => inner.setQuantity(id, quantity),
-    getOrderConditions: () => inner.getOrderConditions(),
     findStores: (query) => inner.findStores(query),
+    getCart: () => inner.getCart(),
+    getOrderConditions: () => inner.getOrderConditions(),
+    getProduct: (id) => inner.getProduct(id),
+    search: (query, limit) => inner.search(query, limit),
     selectStore: (id) => inner.selectStore(id),
+    setQuantity: (id, quantity) => inner.setQuantity(id, quantity),
     ...overrides,
   };
 }
@@ -30,7 +30,7 @@ const q = parseQuantity;
 
 function setup() {
   const store = new InMemoryStore(CATALOGUE);
-  return { store, service: new ShoppingService(store, { sleep: noSleep }) };
+  return { service: new ShoppingService(store, { sleep: noSleep }), store };
 }
 
 describe("ShoppingService", () => {
@@ -84,11 +84,11 @@ describe("ShoppingService", () => {
     const inner = new InMemoryStore(CATALOGUE);
     let lag = 0;
     const store: GroceryStore = delegate(inner, {
+      getCart: async (): Promise<Cart> => (lag-- > 0 ? { lines: [], total: null } : inner.getCart()),
       setQuantity: async (id: ProductId, quantity: Quantity) => {
         lag = 2;
         await inner.setQuantity(id, quantity);
       },
-      getCart: async (): Promise<Cart> => (lag-- > 0 ? { lines: [], total: null } : inner.getCart()),
     });
     const sleeps: number[] = [];
     const service = new ShoppingService(store, { confirmDelayMs: 10, sleep: async (ms) => void sleeps.push(ms) });
@@ -107,11 +107,11 @@ describe("ShoppingService", () => {
 
   it("reads the store's order conditions", async () => {
     const conditions: OrderConditions = {
-      store: "super u ville test",
       bookedSlot: null,
       cartSlot: null,
+      minimumOrders: [{ amount: fromCents(5000), mode: "drive" }],
       nextSlots: [],
-      minimumOrders: [{ mode: "drive", amount: fromCents(5000) }],
+      store: "super u ville test",
     };
     const service = new ShoppingService(new InMemoryStore(CATALOGUE, { conditions }), { sleep: noSleep });
     assert.deepEqual(await service.getOrderConditions(), conditions);
@@ -122,10 +122,10 @@ describe("ShoppingService", () => {
     const details = new Map([[SPAGHETTI.id, { ingredients: "Semoule de blé dur (GLUTEN).", origin: null }]]);
     const service = new ShoppingService(new InMemoryStore(CATALOGUE, { details }), { sleep: noSleep });
     assert.deepEqual(await service.getProduct(SPAGHETTI.id), {
-      id: SPAGHETTI.id,
-      name: SPAGHETTI.name,
-      ingredients: "Semoule de blé dur (GLUTEN).",
       allergens: null,
+      id: SPAGHETTI.id,
+      ingredients: "Semoule de blé dur (GLUTEN).",
+      name: SPAGHETTI.name,
       origin: null,
     });
     assert.equal((await service.getProduct(BOEUF.id)).ingredients, null);
@@ -140,11 +140,11 @@ describe("ShoppingService", () => {
 
   it("store search and selection, inputs validated", async () => {
     const location = {
+      distanceKm: 1,
       id: "123456",
       name: "Testville",
-      serviceType: "drive",
-      distanceKm: 1,
       postalCode: "00000",
+      serviceType: "drive",
     } as const;
     const store = new InMemoryStore(CATALOGUE, { locations: [location] });
     const service = new ShoppingService(store, { sleep: noSleep });

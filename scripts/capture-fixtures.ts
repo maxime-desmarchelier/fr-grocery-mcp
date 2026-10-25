@@ -17,6 +17,10 @@ import { SUPERU_HOME_PATH, SUPERU_ORIGIN } from "../src/infrastructure/retailers
 
 const today = new Date().toISOString().slice(0, 10);
 
+const PRODUCT_COUNT = /\d+\s+produits?/;
+const HTML_TITLE = /<title>([\s\S]*?)<\/title>/;
+const ATTACHED_PICKUP_DATE = /"dateRetrait":"(?:[^"\\]|\\.)*"/;
+
 // ---- Super U: HTML nodes ------------------------------------------------------------------------
 
 const NOISE = "script, noscript, picture, img, svg, iframe, link, style, form.comment-form, .su-dialog-sm";
@@ -24,7 +28,7 @@ const NOISE = "script, noscript, picture, img, svg, iframe, link, style, form.co
 /** keep: [selector, maximum number of nodes kept]. */
 function reduceHtml(html: string, keep: readonly (readonly [string, number])[]): string {
   const doc = new DOMParser().parseFromString(html, "text/html");
-  const count = (doc.querySelector("body")?.textContent ?? "").match(/\d+\s+produits?/)?.[0];
+  const count = (doc.querySelector("body")?.textContent ?? "").match(PRODUCT_COUNT)?.[0];
   const nodes = keep.flatMap(([selector, max]) => [...doc.querySelectorAll(selector)].slice(0, max));
   for (const node of nodes) for (const n of [...node.querySelectorAll(NOISE)]) n.remove();
   const body = nodes.map((n) => n.outerHTML).join("\n");
@@ -93,14 +97,14 @@ const omitBulky = (options: Json): Json => {
 };
 
 function reduceWidgets(html: string, origin: string, specs: readonly WidgetSpec[]): string {
-  const title = html.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() ?? "";
+  const title = html.match(HTML_TITLE)?.[1]?.trim() ?? "";
   const calls = specs.flatMap(({ suffix, trim }) => {
     const options = findWidget(html, suffix) as Json | null;
     if (options === null) return [];
     const reduced = omitBulky(trim ? trim(options) : options);
     return [`Utilitaires.widget.initOptions('fixture${suffix}', ${JSON.stringify(reduced)});`];
   });
-  const retrait = html.match(/"dateRetrait":"(?:[^"\\]|\\.)*"/)?.[0];
+  const retrait = html.match(ATTACHED_PICKUP_DATE)?.[0];
   return `<!doctype html>
 <html lang="fr"><head><title>${title}</title></head><body>
 <!-- Captured from ${origin} on ${today} by scripts/capture-fixtures.ts -->
@@ -128,27 +132,27 @@ interface Capture {
 function superu(): Capture {
   const html = (keep: readonly (readonly [string, number])[]) => (body: string) => reduceHtml(body, keep);
   return {
-    origin: SUPERU_ORIGIN,
     home: SUPERU_HOME_PATH,
+    origin: SUPERU_ORIGIN,
     pages: [
-      { file: "search-spaghetti.html", url: "/recherche?q=spaghetti", reduce: html([[".product-tile", 18]]) },
-      { file: "search-lessive.html", url: "/recherche?q=lessive", reduce: html([[".product-tile", 18]]) },
+      { file: "search-spaghetti.html", reduce: html([[".product-tile", 18]]), url: "/recherche?q=spaghetti" },
+      { file: "search-lessive.html", reduce: html([[".product-tile", 18]]), url: "/recherche?q=lessive" },
       {
         file: "cart.html",
-        url: "/panier",
         reduce: html([
           ["li.cart-row", 4],
           [".order-total-estimate", 1],
           [".cart-minimum-order-amount-block", 1],
         ]),
+        url: "/panier",
       },
-      { file: "product-pesto.html", url: "/p/produit/3870987.html", reduce: html(PRODUCT) },
-      { file: "product-poulet.html", url: "/p/produit/5144285.html", reduce: html(PRODUCT) },
-      { file: "product-jambon.html", url: "/p/produit/4074234.html", reduce: html(PRODUCT) },
+      { file: "product-pesto.html", reduce: html(PRODUCT), url: "/p/produit/3870987.html" },
+      { file: "product-poulet.html", reduce: html(PRODUCT), url: "/p/produit/5144285.html" },
+      { file: "product-jambon.html", reduce: html(PRODUCT), url: "/p/produit/4074234.html" },
       {
         file: "slot-info.html",
-        url: "/on/demandware.store/Sites-DigitalU-Site/fr_FR/Home-IncludeNavigationSlotTimeInfo",
         reduce: html([["[data-footer-slots-info]", 1]]),
+        url: "/on/demandware.store/Sites-DigitalU-Site/fr_FR/Home-IncludeNavigationSlotTimeInfo",
       },
     ],
   };
@@ -167,17 +171,17 @@ function leclerc(): Capture {
   ]);
   const fiche = widgets([CARTOUCHE, { suffix: "_pnlFicheProduit" }]);
   return {
-    origin,
     home: `${base}/recherche.aspx`,
+    origin,
     pages: [
-      { file: "search-spaghetti.html", url: `${base}/recherche.aspx?TexteRecherche=spaghetti`, reduce: search },
-      { file: "search-chocolat.html", url: `${base}/recherche.aspx?TexteRecherche=chocolat`, reduce: search },
-      { file: "search-nomatch.html", url: `${base}/recherche.aspx?TexteRecherche=zzzznomatchzzz`, reduce: search },
-      { file: "store-page.html", url: `${base}/recherche.aspx`, reduce: widgets([CARTOUCHE]) },
-      { file: "product-barilla.html", url: `${base}/fiche-produits-7459-produit.aspx`, reduce: fiche },
-      { file: "product-poulet.html", url: `${base}/fiche-produits-123563-produit.aspx`, reduce: fiche },
-      { file: "product-potimarron.html", url: `${base}/fiche-produits-75976-produit.aspx`, reduce: fiche },
-      { file: "product-unknown.html", url: `${base}/fiche-produits-999999999-produit.aspx`, reduce: fiche },
+      { file: "search-spaghetti.html", reduce: search, url: `${base}/recherche.aspx?TexteRecherche=spaghetti` },
+      { file: "search-chocolat.html", reduce: search, url: `${base}/recherche.aspx?TexteRecherche=chocolat` },
+      { file: "search-nomatch.html", reduce: search, url: `${base}/recherche.aspx?TexteRecherche=zzzznomatchzzz` },
+      { file: "store-page.html", reduce: widgets([CARTOUCHE]), url: `${base}/recherche.aspx` },
+      { file: "product-barilla.html", reduce: fiche, url: `${base}/fiche-produits-7459-produit.aspx` },
+      { file: "product-poulet.html", reduce: fiche, url: `${base}/fiche-produits-123563-produit.aspx` },
+      { file: "product-potimarron.html", reduce: fiche, url: `${base}/fiche-produits-75976-produit.aspx` },
+      { file: "product-unknown.html", reduce: fiche, url: `${base}/fiche-produits-999999999-produit.aspx` },
     ],
   };
 }
@@ -199,7 +203,7 @@ async function captureLocator(http: PageHttp, write: (file: string, body: string
 }
 
 const [retailer, ...only] = process.argv.slice(2);
-const captures: Record<string, () => Capture> = { superu, leclerc };
+const captures: Record<string, () => Capture> = { leclerc, superu };
 const capture = captures[retailer ?? ""];
 if (!capture) throw new Error("Usage: npm run fixtures -- <superu|leclerc> [fragment…]");
 

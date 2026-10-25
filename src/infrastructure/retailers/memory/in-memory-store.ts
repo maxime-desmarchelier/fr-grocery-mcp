@@ -12,11 +12,11 @@ const normalizeText = (text: string): string =>
   text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
 
 const NO_CONDITIONS: OrderConditions = {
-  store: null,
   bookedSlot: null,
   cartSlot: null,
-  nextSlots: [],
   minimumOrders: null,
+  nextSlots: [],
+  store: null,
 };
 
 /** Known ingredients, allergens and origin of a product in the simulated catalogue. */
@@ -46,10 +46,10 @@ export class InMemoryStore implements GroceryStore {
     this.#details = options.details ?? new Map();
     this.#locations = options.locations ?? null;
     this.capabilities = {
+      bookedSlot: true,
+      minimumOrder: this.#conditions.minimumOrders !== null,
       productDetails: true,
       storeLocator: this.#locations !== null,
-      minimumOrder: this.#conditions.minimumOrders !== null,
-      bookedSlot: true,
     };
   }
 
@@ -62,13 +62,13 @@ export class InMemoryStore implements GroceryStore {
     this.#guard();
     const words = normalizeText(query).split(" ");
     const found = this.#catalogue.filter((p) => words.every((w) => normalizeText(p.name).includes(w)));
-    return { query, total: found.length, products: found.slice(0, limit) };
+    return { products: found.slice(0, limit), query, total: found.length };
   }
 
   async getProduct(id: ProductId): Promise<ProductDetails> {
     this.#guard();
     const { name } = this.#product(id);
-    return { id, name, ingredients: null, allergens: null, origin: null, ...this.#details.get(id) };
+    return { allergens: null, id, ingredients: null, name, origin: null, ...this.#details.get(id) };
   }
 
   async getCart(): Promise<Cart> {
@@ -76,10 +76,10 @@ export class InMemoryStore implements GroceryStore {
     const lines: CartLine[] = [...this.#cart].map(([id, quantity]) => {
       const product = this.#product(id);
       return {
-        productId: id,
-        name: product.name,
-        quantity,
         lineTotal: product.price === null ? null : multiply(product.price, quantity),
+        name: product.name,
+        productId: id,
+        quantity,
         unitPrice: product.unitPrice,
       };
     });

@@ -21,6 +21,13 @@ import { parseSlotLabel, type SlotTime } from "../../../domain/slot.ts";
 
 export const LECLERC_NAME = "E.Leclerc Drive";
 
+const DIGITS_THEN_EURO = /^(\d+),(\d{2})€$/;
+const ANY_WHITESPACE = /\s/g;
+const SESSION_EXPIRED = /session a expir|sessionexpiree/i;
+const ATTACHED_PICKUP_DATE = /"dateRetrait":("(?:[^"\\]|\\.)*")/;
+const LINE_BREAKS = /\r?\n|\r/;
+const INGREDIENTS_PREFIX = /^ingr[ée]dients\s*:\s*/i;
+
 // ---- Widget extraction --------------------------------------------------------------------------
 
 /** End of the JSON object or array starting at `start`, honouring strings. */
@@ -67,7 +74,7 @@ function readWidget<T>(html: string, suffix: string, schema: z.ZodType<T>): T | 
 
 // ---- Small conversions -------------------------------------------------------------------------
 
-const NAMED: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+const NAMED: Record<string, string> = { amp: "&", apos: "'", gt: ">", lt: "<", nbsp: " ", quot: '"' };
 
 /** HTML entities in labels ("P&#226;tes", "&amp;"). */
 export function decodeEntities(text: string): string {
@@ -84,7 +91,7 @@ const clean = (text: string | null | undefined): string =>
 
 /** "6,43 €" -> 643 cents. */
 export function parseEuroText(text: string | undefined): Money | null {
-  const m = text?.replace(/\s/g, "").match(/^(\d+),(\d{2})€$/);
+  const m = text?.replace(ANY_WHITESPACE, "").match(DIGITS_THEN_EURO);
   return m ? fromEurosAndCents(Number(m[1]), Number(m[2])) : null;
 }
 
@@ -103,7 +110,7 @@ export function assertStorePage(status: number, html: string): void {
   if (status === 403 || status === 429) throw new SiteBlockedError(LECLERC_NAME);
   if (status >= 500) throw new TransientError(`${LECLERC_NAME} indisponible (HTTP ${status}).`);
   if (html.includes("pnlCartouchePanier'")) return;
-  if (/session a expir|sessionexpiree/i.test(html)) throw new SessionExpiredError(LECLERC_NAME);
+  if (SESSION_EXPIRED.test(html)) throw new SessionExpiredError(LECLERC_NAME);
   throw new SiteBlockedError(LECLERC_NAME);
 }
 
@@ -113,25 +120,25 @@ const optionalText = z.string().nullish();
 const optionalNumber = z.number().nullish();
 
 const rawProduct = z.object({
+  eIncitationLot: optionalNumber,
+  fEstBRIIActifEtDisponible: z.boolean().nullish(),
+  // Ticket E.Leclerc: credit on the loyalty card.
+  fEstVisiblePictoPromoTEL: z.boolean().nullish(),
   iIdProduit: z.union([z.number(), z.string()]),
-  sType: optionalText,
-  sLibelleLigne1: optionalText,
-  sLibelleLigne2: optionalText,
-  nrPVUnitaireTTC: optionalNumber,
-  nrPVParUniteDeMesureTTC: optionalNumber,
-  sUniteMesureTotale: optionalText,
   iQteDisponible: optionalNumber,
   iQuantitePanier: optionalNumber,
-  rTotalAPayer: optionalNumber,
   // Immediate discount (BRII): deducted price, and deducted price per kg.
   nrPVBRIIDeduit: optionalNumber,
   nrPVMesureBRIIDeduit: optionalNumber,
-  fEstBRIIActifEtDisponible: z.boolean().nullish(),
+  nrPVParUniteDeMesureTTC: optionalNumber,
+  nrPVUnitaireTTC: optionalNumber,
+  rTotalAPayer: optionalNumber,
+  sLibelleLigne1: optionalText,
+  sLibelleLigne2: optionalText,
   sTexteLogoBRII: optionalText,
-  eIncitationLot: optionalNumber,
-  // Ticket E.Leclerc: credit on the loyalty card.
-  fEstVisiblePictoPromoTEL: z.boolean().nullish(),
   sTexteLogoTel: optionalText,
+  sType: optionalText,
+  sUniteMesureTotale: optionalText,
 });
 type RawProduct = z.infer<typeof rawProduct>;
 
@@ -141,23 +148,23 @@ function promotionsOf(raw: RawProduct, regular: Money | null): Promotion[] {
   if (raw.fEstBRIIActifEtDisponible && brii) {
     const immediate = money(raw.nrPVBRIIDeduit) !== null;
     promotions.push({
+      details: [brii],
       kind: immediate ? "immediate" : "multibuy",
       label: immediate ? "Avantage immédiat" : "Lot",
-      validUntil: null,
-      details: [brii],
-      regularPrice: immediate ? regular : null,
       mechanic: parseMechanic(brii),
+      regularPrice: immediate ? regular : null,
+      validUntil: null,
     });
   }
   const tel = clean(raw.sTexteLogoTel);
   if (raw.fEstVisiblePictoPromoTEL && tel) {
     promotions.push({
+      details: [tel],
       kind: "loyalty",
       label: "Ticket E.Leclerc",
-      validUntil: null,
-      details: [tel],
-      regularPrice: null,
       mechanic: parseMechanic(tel),
+      regularPrice: null,
+      validUntil: null,
     });
   }
   return promotions;
@@ -168,15 +175,15 @@ function mapProduct(raw: RawProduct): Product {
   const deducted = money(raw.nrPVBRIIDeduit);
   const per = UNITS[raw.sUniteMesureTotale ?? ""];
   const unitAmount = money(raw.nrPVMesureBRIIDeduit) ?? money(raw.nrPVParUniteDeMesureTTC);
-  const unitPrice: UnitPrice | null = per && unitAmount !== null ? { price: unitAmount, per } : null;
+  const unitPrice: UnitPrice | null = per && unitAmount !== null ? { per, price: unitAmount } : null;
   const id = String(raw.iIdProduit);
   return {
+    available: (raw.iQteDisponible ?? 0) > 0,
     id: parseProductId(id),
     name: clean(`${raw.sLibelleLigne1 ?? ""} ${raw.sLibelleLigne2 ?? ""}`) || `Product ${id}`,
     price: deducted ?? regular,
-    unitPrice: deducted !== null && raw.nrPVMesureBRIIDeduit == null ? null : unitPrice,
-    available: (raw.iQteDisponible ?? 0) > 0,
     promotions: promotionsOf(raw, regular),
+    unitPrice: deducted !== null && raw.nrPVMesureBRIIDeduit == null ? null : unitPrice,
   };
 }
 
@@ -209,11 +216,11 @@ export function parseSearchPage(status: number, html: string): SearchPage {
 // ---- Cart and conditions ------------------------------------------------------------------------
 
 const rawCart = z.object({
-  sType: optionalText,
   fEstPanierCourant: z.boolean().nullish(),
-  sTotalAPayer: optionalText,
-  sDateProchainRetraitDisponible: optionalText,
   lstProduits: z.array(z.unknown()).nullish(),
+  sDateProchainRetraitDisponible: optionalText,
+  sTotalAPayer: optionalText,
+  sType: optionalText,
 });
 const cartWidget = z.object({
   objCartouchePanier: z.object({
@@ -248,10 +255,10 @@ export function parseCartPage(status: number, html: string): CartPage {
     if (!raw.success || (raw.data.iQuantitePanier ?? 0) <= 0) continue;
     const product = mapProduct(raw.data);
     lines.push({
-      productId: product.id,
-      name: product.name,
-      quantity: parseQuantity(raw.data.iQuantitePanier ?? 0),
       lineTotal: money(raw.data.rTotalAPayer),
+      name: product.name,
+      productId: product.id,
+      quantity: parseQuantity(raw.data.iQuantitePanier ?? 0),
       unitPrice: product.unitPrice,
     });
   }
@@ -267,13 +274,13 @@ export interface ConditionsPage {
 export function parseConditionsPage(status: number, html: string, today: Date): ConditionsPage {
   assertStorePage(status, html);
   const next = clean(currentCart(html).sDateProchainRetraitDisponible);
-  const attached = html.match(/"dateRetrait":("(?:[^"\\]|\\.)*")/)?.[1];
+  const attached = html.match(ATTACHED_PICKUP_DATE)?.[1];
   const cartLabel = attached ? clean(JSON.parse(attached) as string) : "";
   return {
-    nextSlots: [
-      { mode: "drive", slot: next ? parseSlotLabel(next, today) : null, available: next !== "", full: false },
-    ],
     cartSlot: cartLabel ? parseSlotLabel(cartLabel, today) : null,
+    nextSlots: [
+      { available: next !== "", full: false, mode: "drive", slot: next ? parseSlotLabel(next, today) : null },
+    ],
   };
 }
 
@@ -282,21 +289,17 @@ export function parseConditionsPage(status: number, html: string, today: Date): 
 const ficheWidget = z.object({
   objProduit: z.object({
     iIdProduit: z.union([z.number(), z.string()]),
+    lstMentionProduit: z.array(z.object({ sLibelleValeur: optionalText, sTypeMention: optionalText })).nullish(),
+    sAllergenes: optionalText,
+    sComposition: optionalText,
     sLibelleLigne1: optionalText,
     sLibelleLigne2: optionalText,
-    sComposition: optionalText,
-    sAllergenes: optionalText,
-    lstMentionProduit: z.array(z.object({ sTypeMention: optionalText, sLibelleValeur: optionalText })).nullish(),
   }),
 });
 
 /** Multiline site field ("\r" between lines) as a single line "a ; b". */
 const lines = (text: string | null | undefined): string | null =>
-  (text ?? "")
-    .split(/\r?\n|\r/)
-    .map(clean)
-    .filter(Boolean)
-    .join(" ; ") || null;
+  (text ?? "").split(LINE_BREAKS).map(clean).filter(Boolean).join(" ; ") || null;
 
 /** Page GET fiche-produits-<id>-<label>.aspx (the label is ignored). */
 export function parseProductPage(status: number, html: string, id: ProductId): ProductDetails {
@@ -307,10 +310,10 @@ export function parseProductPage(status: number, html: string, id: ProductId): P
   }
   const origin = fiche.lstMentionProduit?.find((m) => m.sTypeMention === "ORIG")?.sLibelleValeur;
   return {
-    id,
-    name: clean(`${fiche.sLibelleLigne1 ?? ""} ${fiche.sLibelleLigne2 ?? ""}`),
-    ingredients: lines(fiche.sComposition)?.replace(/^ingr[ée]dients\s*:\s*/i, "") ?? null,
     allergens: lines(fiche.sAllergenes),
+    id,
+    ingredients: lines(fiche.sComposition)?.replace(INGREDIENTS_PREFIX, "") ?? null,
+    name: clean(`${fiche.sLibelleLigne1 ?? ""} ${fiche.sLibelleLigne2 ?? ""}`),
     origin: clean(origin) || null,
   };
 }
@@ -328,7 +331,7 @@ export function assertMutationAccepted(status: number, body: string): void {
     events = null;
   }
   if (!Array.isArray(events)) {
-    if (/session a expir|sessionexpiree/i.test(body)) throw new SessionExpiredError(LECLERC_NAME);
+    if (SESSION_EXPIRED.test(body)) throw new SessionExpiredError(LECLERC_NAME);
     throw new TransientError("Unexpected response to the cart change: the site may have changed.");
   }
 }
@@ -346,12 +349,12 @@ const nearby = z.object({
   points: z
     .array(
       z.object({
+        distance: optionalNumber,
+        name: optionalText,
         noPL: z.union([z.string(), z.number()]),
         noPR: z.union([z.string(), z.number()]).nullish(),
-        name: optionalText,
-        serviceType: optionalText,
-        distance: optionalNumber,
         postalCode: optionalText,
+        serviceType: optionalText,
         urlSiteCourse: optionalText,
       }),
     )
@@ -391,8 +394,8 @@ export interface LeclercStoreLocation extends StoreLocation {
 
 const SERVICE_TYPES: Record<string, StoreLocation["serviceType"]> = {
   drive: "drive",
-  relais: "relay",
   livraison: "delivery",
+  relais: "relay",
 };
 
 export function parseNearby(status: number, body: string): LeclercStoreLocation[] {
@@ -408,13 +411,13 @@ export function parseNearby(status: number, body: string): LeclercStoreLocation[
     // A walk-in pickup point shares its store's noPL: the exposed identifier combines both.
     const retrievalPointId = String(point.noPR ?? point.noPL);
     stores.push({
+      distanceKm: point.distance ?? null,
+      host,
       id: retrievalPointId === storeId ? storeId : `${storeId}-${retrievalPointId}`,
       name: clean(point.name) || `Store ${storeId}`,
-      serviceType: SERVICE_TYPES[(point.serviceType ?? "").toLowerCase()] ?? "other",
-      distanceKm: point.distance ?? null,
       postalCode: point.postalCode ?? null,
       retrievalPointId,
-      host,
+      serviceType: SERVICE_TYPES[(point.serviceType ?? "").toLowerCase()] ?? "other",
     });
   }
   return stores;
