@@ -46,8 +46,8 @@ mise x -- hk run pre-commit --plan     # show what the pre-commit hook would do
 
 `pre-commit` runs every step of [hk.pkl](hk.pkl) — `biome`, `tsc`, the `hk util` hygiene checks (merge-conflict
 markers, private keys, trailing whitespace, final newline, line endings, large files, case conflicts, submodules,
-smart quotes) and `mise fmt` — applies their fixes and stages the result; anything you left unstaged is stashed and
-restored. It refuses to commit on `main`.
+smart quotes), `mise fmt`, and the GitHub Actions checks (`jactionlint`, `pinact`, `zizmor`) — applies their fixes and
+stages the result; anything you left unstaged is stashed and restored. It refuses to commit on `main`.
 
 A second hook, `commit-msg`, enforces [Conventional Commits](https://www.conventionalcommits.org/) on the message.
 `HK=0 git commit …` skips both, and `hk install` without `--global` installs them for this repository only.
@@ -58,6 +58,21 @@ the parsers are tested against (`npm run fixtures`).
 The linters come from `node_modules`, not from mise: run `npm ci` first. hk itself is pinned in `mise.toml`, and its
 Pkl imports in `hk.pkl` must carry the **same version** — bumping `hk` does not rewrite those URLs, so change both by
 hand. hk has no macOS Intel build, so on an Intel Mac install just the runtime with `mise install node`.
+
+## GitHub Actions
+
+Workflows are linted with [jactionlint](https://github.com/jdx/jactionlint) (actionlint, plus the shellcheck pass on
+`run:` blocks), audited with [zizmor](https://docs.zizmor.sh), and every `uses:` is **pinned to a full commit SHA**
+with the readable version in a comment:
+
+```yaml
+- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+```
+
+A tag can be moved; a SHA cannot. Dependabot keeps proposing the bumps (it rewrites both the SHA and the comment), and
+`hk fix` re-pins anything that slipped through. Changing the version by hand is still possible: put the new SHA and its
+comment, then run `hk check`.
+
 
 
 ## Code rules
