@@ -27,7 +27,6 @@ jobs:
           key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-${{ runner.os }}-
       - run: npm ci
-      # Same ruleset as the git hook: biome, tsc, hygiene, markdown, workflows.
-      # `no_commit_to_branch` is a commit-time guard (it fails on main by design), so CI skips it.
-      - run: mise x -- hk check --all --skip-step no_commit_to_branch
+      # Same linters and hygiene checks as the git hook.
+      - run: mise x -- hk check --all
       - run: npm run test:coverage
