@@ -10,6 +10,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [Sem
 - Git hooks with [hk](https://hk.jdx.dev) (`hk.pkl`): Biome and the type checker run on the files a commit touches,
   apply their fixes and stage them. Repository hygiene checks (merge-conflict markers, private keys, trailing
   whitespace, line endings, large files…) and a Conventional Commits check on the message run as well.
+- GitHub Actions are linted (`jactionlint`), audited (`zizmor`) and pinned to commit SHAs (`pinact`), with the
+  readable version in a comment; Dependabot still proposes the updates. `dependabot.yml` gets a 7-day cooldown.
 
 ### Changed
 
