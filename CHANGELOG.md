@@ -2,6 +2,12 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Security policy, contribution guide, issue and pull request templates, code owners.
+
 ## [0.1.0] - 2026-10-25
 
 First public release: a single MCP server for several French online grocery services ("drive"), with

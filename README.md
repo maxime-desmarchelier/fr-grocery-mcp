@@ -128,6 +128,16 @@ npm run format                     # Biome
 Architecture and technical choices: [docs/architecture.md](docs/architecture.md).
 Adding a retailer: [docs/adding-a-retailer.md](docs/adding-a-retailer.md).
 
+## Contributing
+
+Issues and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) for the setup, the code rules and what
+`npm run check` must show before a pull request. `main` is protected and CI must be green.
+
+## Security
+
+Please report vulnerabilities privately through the repository's Security tab, never in a public issue: see
+[SECURITY.md](SECURITY.md).
+
 ## License
 
 [MIT](LICENSE). The E.Leclerc Drive adapter builds on knowledge from
