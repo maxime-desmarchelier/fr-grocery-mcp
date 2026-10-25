@@ -46,8 +46,9 @@ mise x -- hk run pre-commit --plan     # show what the pre-commit hook would do
 
 `pre-commit` runs every step of [hk.pkl](hk.pkl) — `biome`, `tsc`, the `hk util` hygiene checks (merge-conflict
 markers, private keys, trailing whitespace, final newline, line endings, large files, case conflicts, submodules,
-smart quotes), `mise fmt`, and the GitHub Actions checks (`jactionlint`, `pinact`, `zizmor`) — applies their fixes and
-stages the result; anything you left unstaged is stashed and restored. It refuses to commit on `main`.
+smart quotes), the markdown linter (`rumdl`), `mise fmt`, and the GitHub Actions checks (`jactionlint`, `pinact`,
+`zizmor`) — applies their fixes and stages the result; anything you left unstaged is stashed and restored. It refuses
+to commit on `main`.
 
 A second hook, `commit-msg`, enforces [Conventional Commits](https://www.conventionalcommits.org/) on the message.
 `HK=0 git commit …` skips both, and `hk install` without `--global` installs them for this repository only.
@@ -72,8 +73,6 @@ with the readable version in a comment:
 A tag can be moved; a SHA cannot. Dependabot keeps proposing the bumps (it rewrites both the SHA and the comment), and
 `hk fix` re-pins anything that slipped through. Changing the version by hand is still possible: put the new SHA and its
 comment, then run `hk check`.
-
-
 
 ## Code rules
 
