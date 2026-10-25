@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/maxime-desmarchelier/fr-grocery-mcp/security/advisories/new
+    about: Private disclosure only. Never open a public issue for a security problem.
+  - name: Documentation and architecture
+    url: https://github.com/maxime-desmarchelier/fr-grocery-mcp/blob/main/docs/architecture.md
+    about: How the layers, adapters and parsers fit together.
