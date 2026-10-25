@@ -44,9 +44,16 @@ mise x -- hk fix                       # apply the fixes without staging them
 mise x -- hk run pre-commit --plan     # show what the pre-commit hook would do
 ```
 
-`pre-commit` runs `biome` and `tsc` (from [hk.pkl](hk.pkl)), applies their fixes and stages the result; anything you
-left unstaged is stashed and restored. `HK=0 git commit …` skips the hook, and `hk install` without `--global` installs
-it for this repository only.
+`pre-commit` runs every step of [hk.pkl](hk.pkl) — `biome`, `tsc`, the `hk util` hygiene checks (merge-conflict
+markers, private keys, trailing whitespace, final newline, line endings, large files, case conflicts, submodules,
+smart quotes) and `mise fmt` — applies their fixes and stages the result; anything you left unstaged is stashed and
+restored. It refuses to commit on `main`.
+
+A second hook, `commit-msg`, enforces [Conventional Commits](https://www.conventionalcommits.org/) on the message.
+`HK=0 git commit …` skips both, and `hk install` without `--global` installs them for this repository only.
+
+`test/fixtures/**` is excluded from the text checks: those pages are captured from the sites, and their bytes are what
+the parsers are tested against (`npm run fixtures`).
 
 The linters come from `node_modules`, not from mise: run `npm ci` first. hk itself is pinned in `mise.toml`, and its
 Pkl imports in `hk.pkl` must carry the **same version** — bumping `hk` does not rewrite those URLs, so change both by
