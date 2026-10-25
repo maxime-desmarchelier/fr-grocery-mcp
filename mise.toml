@@ -25,5 +25,5 @@ description = "typecheck + lint + tests with coverage"
 run = "npm run check"
 
 [tasks.lint]
-description = "same rules as the git hook and CI (hk check --all)"
+description = "linters and hygiene checks shared by the hook and CI (hk check --all)"
 run = "hk check --all"

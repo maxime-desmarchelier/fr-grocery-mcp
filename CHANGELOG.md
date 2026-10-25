@@ -13,9 +13,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [Sem
 - GitHub Actions are linted (`jactionlint`), audited (`zizmor`) and pinned to commit SHAs (`pinact`), with the
   readable version in a comment; Dependabot still proposes the updates. `dependabot.yml` gets a 7-day cooldown.
 - Markdown is linted with `rumdl` (`.rumdl.toml`): 120 columns, no bare code block, no double blank line.
-- CI runs `hk check --all`, the same ruleset as the git hooks (Biome, `tsc`, hygiene, markdown, workflows), instead of
-  separate `typecheck` and `lint` commands; `mise run lint` runs it locally. Tests stay a separate step. CI
-  skips `no_commit_to_branch`, which only makes sense when committing.
+- CI runs `hk check --all`, the same linters and hygiene checks as the git hook (Biome, `tsc`, hygiene, markdown,
+  workflows), instead of separate `typecheck` and `lint` commands; `mise run lint` runs it locally. Tests stay a
+  separate step. The `no_commit_to_branch` guard is declared in the `pre-commit` hook only, so `hk check --all` and CI
+  can run on `main`.
 
 ### Changed
 
