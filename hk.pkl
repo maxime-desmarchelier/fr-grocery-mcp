@@ -1,11 +1,40 @@
 amends "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Config.pkl"
 import "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Builtins.pkl"
 
-min_hk_version = "2.8.1"
-
 // Keep the two package URLs above and the `hk` version in mise.toml on the
 // same release: bumping the binary does not rewrite these pinned imports.
+min_hk_version = "2.8.1"
+
+// Pages captured from the sites: their bytes are what the parsers are tested against.
+local fixtures = List("test/fixtures/**")
+
 steps {
   ["biome"] = Builtins.biome
   ["tsc"] = Builtins.tsc
+
+  // Hygiene: no separate tool needed, these are `hk util` commands.
+  ["check_added_large_files"] = Builtins.check_added_large_files
+  ["check_case_conflict"] = Builtins.check_case_conflict
+  ["check_merge_conflict"] = (Builtins.check_merge_conflict) { exclude = fixtures }
+  ["check_symlinks"] = Builtins.check_symlinks
+  ["destroyed_symlinks"] = Builtins.destroyed_symlinks
+  ["detect_private_key"] = (Builtins.detect_private_key) { exclude = fixtures }
+  ["fix_smart_quotes"] = (Builtins.fix_smart_quotes) { exclude = fixtures }
+  ["forbid_submodules"] = Builtins.forbid_submodules
+  ["mixed_line_ending"] = (Builtins.mixed_line_ending) { exclude = fixtures }
+  ["newlines"] = (Builtins.newlines) { exclude = fixtures }
+  ["no_commit_to_branch"] = Builtins.no_commit_to_branch
+  ["trailing_whitespace"] = (Builtins.trailing_whitespace) { exclude = fixtures }
+
+  // mise.toml is formatted by mise itself.
+  ["mise"] = Builtins.mise
+}
+
+hooks {
+  // Conventional Commits, as documented in CONTRIBUTING.md.
+  ["commit-msg"] {
+    steps {
+      ["conventional_commit"] = Builtins.check_conventional_commit
+    }
+  }
 }
