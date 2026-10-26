@@ -2,6 +2,14 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [SemVer](https://semver.org/).
 
+## [0.1.1](https://github.com/maxime-desmarchelier/fr-grocery-mcp/compare/v0.1.0...v0.1.1) (2026-10-26)
+
+
+### Fixed
+
+* keep the branch guard in the pre-commit hook ([#14](https://github.com/maxime-desmarchelier/fr-grocery-mcp/issues/14)) ([81c86e2](https://github.com/maxime-desmarchelier/fr-grocery-mcp/commit/81c86e230a04c7e7921d13675022ebddd3312540))
+* skip the branch guard when CI runs the hooks ([#13](https://github.com/maxime-desmarchelier/fr-grocery-mcp/issues/13)) ([a1f1dc5](https://github.com/maxime-desmarchelier/fr-grocery-mcp/commit/a1f1dc5a2860ceb204545fb811fa80173530d2ed))
+
 ## [0.1.0] - 2026-10-25
 
 First public release: a single MCP server for several French online grocery services ("drive"), with

@@ -325,18 +325,23 @@ describe("MCP server (real adapters, simulated sites)", () => {
 describe("MCP server (stdio)", () => {
   it("starts as launched by a client and lists its tools without touching the sites", async () => {
     const client = new Client({ name: "test", version: "0" });
-    await client.connect(
-      new StdioClientTransport({
-        args: [fileURLToPath(new URL("../../src/main.ts", import.meta.url))],
-        command: process.execPath,
-        stderr: "ignore",
-      }),
-    );
-    assert.equal(client.getServerVersion()?.name, SERVER_NAME);
-    const pkg = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as { version: string };
-    assert.equal(SERVER_VERSION, pkg.version, "server version aligned with package.json");
-    const { tools } = await client.listTools();
-    assert.deepEqual(tools.map((t) => t.name).sort(), TOOLS);
-    await client.close();
+    try {
+      await client.connect(
+        new StdioClientTransport({
+          args: [fileURLToPath(new URL("../../src/main.ts", import.meta.url))],
+          command: process.execPath,
+          stderr: "inherit",
+        }),
+      );
+      assert.equal(client.getServerVersion()?.name, SERVER_NAME);
+      const pkg = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as {
+        version: string;
+      };
+      assert.equal(SERVER_VERSION, pkg.version, "server version aligned with package.json");
+      const { tools } = await client.listTools();
+      assert.deepEqual(tools.map((t) => t.name).sort(), TOOLS);
+    } finally {
+      await client.close();
+    }
   });
 });

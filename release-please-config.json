@@ -20,6 +20,7 @@
     ".": {
       "release-type": "node",
       "extra-files": [
+        "src/interface/mcp/server.ts",
         { "type": "json", "path": "server.json", "jsonpath": "$.version" },
         { "type": "json", "path": "server.json", "jsonpath": "$.packages[0].version" }
       ]

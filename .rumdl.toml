@@ -7,3 +7,6 @@ line_length = 120
 "CLAUDE.md" = ["MD041"]
 # Rendered inside the pull request body, where a level 1 heading would duplicate the title.
 ".github/PULL_REQUEST_TEMPLATE.md" = ["MD041"]
+# release-please regenerates this file with its own formatting (`*` markers, blank lines):
+# relaxing the rules it breaks avoids a manual reformat at every release.
+"CHANGELOG.md" = ["MD004", "MD012"]

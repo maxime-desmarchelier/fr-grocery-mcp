@@ -39,11 +39,18 @@ const server = serverSchema.parse(readJson("server.json"));
 const lock = lockSchema.parse(readJson("package-lock.json"));
 const manifest = manifestSchema.parse(readJson(".release-please-manifest.json"));
 
+const serverSource = readFileSync(new URL("../src/interface/mcp/server.ts", import.meta.url), "utf8");
+const serverVersion = z
+  .string()
+  .regex(VERSION)
+  .parse(serverSource.match(/^export const SERVER_VERSION = "(.*)";/m)?.[1]);
+
 assert.equal(server.version, pkg.version, "server.json version differs from package.json");
 assert.equal(server.packages[0].version, pkg.version, "MCP npm package version differs from package.json");
 assert.equal(lock.version, pkg.version, "package-lock.json version differs from package.json");
 assert.equal(lock.packages[""].version, pkg.version, "package-lock.json root version differs from package.json");
 assert.equal(manifest["."], pkg.version, "release-please manifest differs from package.json");
+assert.equal(serverVersion, pkg.version, "SERVER_VERSION in src/interface/mcp/server.ts differs from package.json");
 
 const releaseTag = process.env["RELEASE_TAG"];
 if (releaseTag) assert.equal(releaseTag, `v${pkg.version}`, "release tag differs from package.json");
