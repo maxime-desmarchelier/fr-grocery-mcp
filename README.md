@@ -97,21 +97,27 @@ the file. The Super U store is chosen on coursesu.com.
 
 ## Usage
 
-Claude Code (`.mcp.json`):
+The server is distributed as the `fr-grocery-mcp` npm package and runs locally over stdio. Claude Code (`.mcp.json`):
 
 ```json
 {
   "mcpServers": {
     "fr-grocery-mcp": {
-      "command": "node",
-      "args": ["/path/to/fr-grocery-mcp/src/main.ts"],
+      "command": "npx",
+      "args": ["-y", "fr-grocery-mcp@latest"],
       "env": { "FR_GROCERY_CONFIG": "/path/to/fr-grocery-mcp.json" }
     }
   }
 }
 ```
 
-Manual inspection: `npm run inspect` (MCP Inspector).
+Pin an exact version (for example `fr-grocery-mcp@0.2.0`) instead of `@latest` for a reproducible setup. The same
+package is described in the [official MCP Registry](https://registry.modelcontextprotocol.io/) by
+`io.github.maxime-desmarchelier/fr-grocery-mcp`. Each release is published on npm, GitHub Releases and the MCP
+Registry; see [docs/releasing.md](docs/releasing.md).
+
+From a source checkout, use `"command": "node"` and
+`"args": ["/path/to/fr-grocery-mcp/src/main.ts"]` instead. Manual inspection: `npm run inspect` (MCP Inspector).
 
 ## Development
 
@@ -128,7 +134,8 @@ npm run format                     # Biome
 ```
 
 Architecture and technical choices: [docs/architecture.md](docs/architecture.md).
-Adding a retailer: [docs/adding-a-retailer.md](docs/adding-a-retailer.md).
+Adding a retailer: [docs/adding-a-retailer.md](docs/adding-a-retailer.md). Releases:
+[docs/releasing.md](docs/releasing.md).
 
 ## Contributing
 
