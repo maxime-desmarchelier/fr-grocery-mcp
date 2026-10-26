@@ -124,7 +124,9 @@ A new retailer follows [docs/adding-a-retailer.md](docs/adding-a-retailer.md) an
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `test:`,
   `chore:`), in English. French is fine for retailer-facing labels only.
 - One topic per pull request; keep diffs small and focused.
-- Update `CHANGELOG.md` under `## [Unreleased]` for anything a user can notice.
+- Do not edit `CHANGELOG.md`, package versions or `server.json` versions by hand: release-please includes user-facing
+  Conventional Commits in its release PR. You may polish the generated notes in that PR immediately before merging it.
+  See [docs/releasing.md](docs/releasing.md).
 - Fill in the pull request template: what changed, how it was tested, and confirm that no order can be placed.
 - `main` is protected: pull requests are required and CI must be green before merging. There is a single maintainer,
   so a review is not mandatory, but the CI check is.

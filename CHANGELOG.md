@@ -2,31 +2,6 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions: [SemVer](https://semver.org/).
 
-## [Unreleased]
-
-### Added
-
-- Security policy, contribution guide, issue and pull request templates, code owners.
-- Git hooks with [hk](https://hk.jdx.dev) (`hk.pkl`): Biome and the type checker run on the files a commit touches,
-  apply their fixes and stage them. Repository hygiene checks (merge-conflict markers, private keys, trailing
-  whitespace, line endings, large files…) and a Conventional Commits check on the message run as well.
-- GitHub Actions are linted (`jactionlint`), audited (`zizmor`) and pinned to commit SHAs (`pinact`), with the
-  readable version in a comment; Dependabot still proposes the updates. `dependabot.yml` gets a 7-day cooldown.
-- Markdown is linted with `rumdl` (`.rumdl.toml`): 120 columns, no bare code block, no double blank line.
-- CI runs `hk check --all`, the same linters and hygiene checks as the git hook (Biome, `tsc`, hygiene, markdown,
-  workflows), instead of separate `typecheck` and `lint` commands; `mise run lint` runs it locally. Tests stay a
-  separate step. The `no_commit_to_branch` guard is declared in the `pre-commit` hook only, so `hk check --all` and CI
-  can run on `main`.
-
-### Changed
-
-- Node 26 is now the supported runtime (`engines`, CI, `mise.toml`); `@types/node` aligned on 26.x.
-- The Biome configuration is stricter: type-aware rules, `noFloatingPromises`, `noMisusedPromises`,
-  `noUndeclaredDependencies`, `useTopLevelRegex`, sorted object keys, and the regexes of `src/` and `scripts/`
-  hoisted to the module scope.
-- The toolchain is pinned in `mise.lock` (multi-platform) and CI installs it with `jdx/mise-action`, so the Node
-  version is declared in one place only.
-
 ## [0.1.0] - 2026-10-25
 
 First public release: a single MCP server for several French online grocery services ("drive"), with

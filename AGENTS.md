@@ -1,6 +1,7 @@
 # Instructions for coding agents
 
-Multi-retailer MCP server (E.Leclerc Drive, Super U) in TypeScript, run natively by Node 26 (no build step).
+Multi-retailer MCP server (E.Leclerc Drive, Super U) in TypeScript, run natively by Node 26 in development. `prepack`
+compiles `src/` to JavaScript in `dist/` for npm; never publish raw TypeScript.
 Read `docs/architecture.md`; for a new retailer, `docs/adding-a-retailer.md`.
 
 ## Commands
@@ -27,4 +28,5 @@ Read `docs/architecture.md`; for a new retailer, `docs/adding-a-retailer.md`.
 - A change on a site: capture the fixtures again (`npm run fixtures -- <retailer>`), adapt the parsers and
   their tests, update `docs/retailers/<retailer>.md`.
 - stdout is reserved for the MCP protocol: diagnostics on stderr only.
-- Commits in Conventional Commits format, in English.
+- Commits in Conventional Commits format, in English. Release PRs and versioning are automated with release-please;
+  see `docs/releasing.md`. Do not edit versions or `CHANGELOG.md` by hand.
