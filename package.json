@@ -56,8 +56,8 @@
     "prepack": "npm run build",
     "smoke:package": "node scripts/smoke-package.ts dist/main.js",
     "start": "node src/main.ts",
-    "test": "node --test --test-reporter=spec \"test/{unit,contract,integration}/**/*.test.ts\"",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/**\" --test-coverage-exclude=\"src/main.ts\" --test-coverage-exclude=\"src/infrastructure/browser/**\" --test-coverage-lines=90 --test-coverage-branches=85 \"test/{unit,contract,integration}/**/*.test.ts\"",
+    "test": "node --test --test-force-exit --test-reporter=spec \"test/{unit,contract,integration}/**/*.test.ts\"",
+    "test:coverage": "node --test --test-force-exit --experimental-test-coverage --test-coverage-include=\"src/**\" --test-coverage-exclude=\"src/main.ts\" --test-coverage-exclude=\"src/infrastructure/browser/**\" --test-coverage-lines=90 --test-coverage-branches=85 \"test/{unit,contract,integration}/**/*.test.ts\"",
     "test:live": "node --test --test-reporter=spec test/live/*.live.ts",
     "typecheck": "tsc -p ."
   },

@@ -22,6 +22,10 @@
   },
   "overrides": [
     {
+      "formatter": { "enabled": false },
+      "includes": ["CHANGELOG.md"]
+    },
+    {
       "includes": ["test/**"],
       "linter": { "rules": { "performance": { "useTopLevelRegex": "off" } } }
     }
