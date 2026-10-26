@@ -34,7 +34,7 @@ import {
 export const SERVER_NAME = "fr-grocery-mcp";
 
 // Kept in sync with package.json by release-please.
-export const SERVER_VERSION = "0.1.1"; // x-release-please-version
+export const SERVER_VERSION = "0.2.0"; // x-release-please-version
 
 export function instructions(registry: StoreRegistry): string {
   const stores = registry
