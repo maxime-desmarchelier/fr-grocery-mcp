@@ -32,7 +32,9 @@ import {
 } from "./presenters.ts";
 
 export const SERVER_NAME = "fr-grocery-mcp";
-export const SERVER_VERSION = "0.1.0";
+
+// Kept in sync with package.json by release-please.
+export const SERVER_VERSION = "0.1.1"; // x-release-please-version
 
 export function instructions(registry: StoreRegistry): string {
   const stores = registry
