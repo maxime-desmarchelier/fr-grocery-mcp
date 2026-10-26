@@ -65,8 +65,10 @@ instead of retrying, no tool books a slot or places an order.
 **No dubious signal.** The `.notavailable` block of the Super U cart is present on every line (hidden with CSS):
 it is not read. The Leclerc minimum is not exposed when logged out: `minimumOrders: null`, never 0.
 
-**TypeScript run natively by Node 26** (type stripping): no build, `tsc` (TypeScript 7) only type-checks.
-`erasableSyntaxOnly` forbids non-erasable syntax (enums, parameter properties).
+**TypeScript run natively by Node 26 in development** (type stripping): no build for local execution or tests. The npm
+package is JavaScript because Node refuses type stripping under `node_modules`: `prepack` runs `tsc -p
+tsconfig.build.json` and emits `dist/`, rewriting relative `.ts` imports to `.js`. `erasableSyntaxOnly` forbids
+non-erasable syntax (enums, parameter properties).
 
 ## Tests
 

@@ -1,6 +1,6 @@
 {
   "bin": {
-    "fr-grocery-mcp": "src/main.ts"
+    "fr-grocery-mcp": "dist/main.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
@@ -16,15 +16,45 @@
   "engines": {
     "node": ">=26"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "homepage": "https://github.com/maxime-desmarchelier/fr-grocery-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/maxime-desmarchelier/fr-grocery-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "grocery",
+    "france",
+    "leclerc",
+    "super-u"
+  ],
   "license": "MIT",
+  "mcpName": "io.github.maxime-desmarchelier/fr-grocery-mcp",
   "name": "fr-grocery-mcp",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxime-desmarchelier/fr-grocery-mcp.git"
+  },
   "scripts": {
-    "check": "npm run typecheck && npm run lint && npm run test:coverage",
+    "build": "node --eval \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "check": "npm run typecheck && npm run lint && npm run test:coverage && npm run check:release",
+    "check:release": "node scripts/check-release.ts",
     "doctor": "node scripts/doctor.ts",
     "fixtures": "node scripts/capture-fixtures.ts",
     "format": "biome check --write .",
     "inspect": "npx -y @modelcontextprotocol/inspector node src/main.ts",
     "lint": "biome check .",
+    "prepack": "npm run build",
+    "smoke:package": "node scripts/smoke-package.ts dist/main.js",
     "start": "node src/main.ts",
     "test": "node --test --test-reporter=spec \"test/{unit,contract,integration}/**/*.test.ts\"",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/**\" --test-coverage-exclude=\"src/main.ts\" --test-coverage-exclude=\"src/infrastructure/browser/**\" --test-coverage-lines=90 --test-coverage-branches=85 \"test/{unit,contract,integration}/**/*.test.ts\"",

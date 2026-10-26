@@ -29,4 +29,6 @@ jobs:
       - run: npm ci
       # Same linters and hygiene checks as the git hook.
       - run: mise x -- hk check --all
+      - run: npm run check:release
       - run: npm run test:coverage
+      - run: npm pack --dry-run
