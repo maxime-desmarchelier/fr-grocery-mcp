@@ -27,8 +27,9 @@ If you already have a global mise config with unpinned tools, `mise install --lo
 the lockfile: run `mise lock --global` once, or install the project tools with `mise install node`.
 
 `npm run check` (typecheck + Biome + tests with coverage thresholds) must pass before any commit is proposed. CI runs
-the same two things: `hk check --all` (the linters and hygiene checks, on the whole repository) and
-`npm run test:coverage`.
+four checks: `hk check --all` (the linters and hygiene checks, on the whole repository), `npm run check:release` (the
+same version in `package.json`, `server.json`, `package-lock.json`, the release-please manifest and
+`SERVER_VERSION`), `npm run test:coverage` and `npm pack --dry-run`.
 Tests never touch the real sites; `npm run doctor` and `npm run test:live` do, at your own risk and only when you ask
 for it.
 

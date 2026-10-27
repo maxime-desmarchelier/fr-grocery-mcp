@@ -18,7 +18,7 @@ _.path = ["node_modules/.bin"]
 
 [tasks.chrome]
 description = "Debug Chrome (port 9222) on a dedicated profile, where you log in once to each site"
-run = '"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9222 --user-data-dir="$HOME/.fr-grocery-mcp/chrome" --no-first-run --no-default-browser-check'
+run = 'case "$(uname -s)" in Darwin) BROWSER="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ;; Linux) BROWSER="${GOOGLE_CHROME:-google-chrome}" ;; *) echo "Unsupported OS: $(uname -s)." >&2; exit 1 ;; esac; "$BROWSER" --remote-debugging-port=9222 --user-data-dir="$HOME/.fr-grocery-mcp/chrome" --no-first-run --no-default-browser-check'
 
 [tasks.check]
 description = "typecheck + lint + tests with coverage"
