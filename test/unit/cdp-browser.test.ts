@@ -14,7 +14,6 @@ function setup(t: TestContext, options: { timeoutMs?: number } = {}) {
   return { browser, chrome };
 }
 
-/** A Chrome tab already on the site, whose in-page fetch answers `body`. */
 function onSite(chrome: FakeChrome, origin: string, body = "ok") {
   return chrome.addPage({ onFetch: () => ({ body, status: 200 }), url: `${origin}/` });
 }

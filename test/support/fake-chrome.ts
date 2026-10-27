@@ -1,7 +1,3 @@
-// A fake Chrome behind the DevTools protocol: /json/list, /json/new and CDP over a fake WebSocket.
-// Tests drive CdpBrowser through its public API and script the browser's behaviour here:
-// pages on (or off) their site, slow or stuck loads, dropped connections, protocol errors…
-
 import type { HttpResponse } from "../../src/infrastructure/http/page-http.ts";
 
 interface CdpCommand {
@@ -11,11 +7,9 @@ interface CdpCommand {
 }
 
 export interface FakePageOptions {
-  /** The response of the in-page fetch. */
   readonly onFetch?: (url: string) => HttpResponse;
   /** document.readyState reported while loading; "loading" never completes. */
   readonly readyState?: string;
-  /** Where the tab currently is; may be off the site (about:blank, another scheme…). */
   readonly url: string;
 }
 
@@ -26,15 +20,12 @@ export class FakePage {
   readonly wsUrl: string;
   readonly navigations: string[] = [];
   readonly fetchExpressions: string[] = [];
-  /** Next Runtime.evaluate throws inside the page, once. */
   exceptionOnce: string | null = null;
-  /** Next CDP command answers a protocol error, once. */
   protocolErrorOnce: string | null = null;
-  /** Next CDP command closes the connection without answering, once. */
+  /** Closes the connection on the next command without answering. */
   dropNextCommand = false;
-  /** Commands are never answered: lets the client's timeout fire. */
+  /** Leaves commands unanswered so the client's timeout fires. */
   hang = false;
-  /** The in-page fetch returns no usable value. */
   emptyFetchResponse = false;
 
   constructor(wsUrl: string, options: FakePageOptions) {
@@ -57,11 +48,8 @@ export class FakeChrome {
   readonly pages: FakePage[] = [];
   /** Extra raw targets mixed into /json/list (wrong type, malformed URL…). */
   extraTargets: { type: string; url: string; webSocketDebuggerUrl: string }[] = [];
-  /** When set, /json/list fails like an unreachable Chrome. */
   targetsError: Error | null = null;
-  /** HTTP status of /json/new; 500 simulates a Chrome that cannot open a tab. */
   newTabStatus = 200;
-  /** Artificial latency before every CDP answer, to expose concurrent commands. */
   latencyMs = 0;
   listCalls = 0;
   readonly newTabCalls: string[] = [];
@@ -77,7 +65,6 @@ export class FakeChrome {
     return page;
   }
 
-  /** The Chrome HTTP endpoint used by CdpBrowser. */
   fetch = async (input: string | URL, init?: { method?: string }): Promise<Response> => {
     const url = String(input);
     if (url.endsWith("/json/list")) {
@@ -149,7 +136,6 @@ export class FakeChrome {
   }
 }
 
-/** Minimal browser-style WebSocket, just what CdpTab uses. */
 export class FakeSocket {
   static readonly OPEN = 1;
   readyState = 0;
@@ -207,7 +193,6 @@ export class FakeSocket {
   }
 }
 
-/** Points the globals CdpBrowser relies on at the fake Chrome; returns a restore function. */
 export function useFakeChrome(chrome: FakeChrome): () => void {
   const realFetch = globalThis.fetch;
   const realWebSocket = globalThis.WebSocket;
