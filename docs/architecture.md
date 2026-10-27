@@ -72,12 +72,13 @@ non-erasable syntax (enums, parameter properties).
 
 ## Tests
 
-| Level       | Files                 | Against                                                                                                                      |
-| ----------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| unit        | `test/unit/`          | domain (promotions, slots), service, registry, comparison, parsers (real fixtures), adapters (fake HTTP), decorators, config |
-| contract    | `test/contract/`      | the same `GroceryStore` contract on the simulator and on every adapter (sites simulated by the fixtures)                     |
-| integration | `test/integration/`   | real MCP client: simulated retailers, real adapters on simulated sites, stdio subprocess                                     |
-| live        | `test/live/` (not CI) | real sites, the user's cart left intact; `npm run doctor` read-only                                                          |
+| Level       | Files                 | Against                                                                                                                                                 |
+| ----------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| unit        | `test/unit/`          | domain (promotions, slots), service, registry, comparison, parsers (real fixtures), adapters (fake HTTP), decorators, config, CDP browser (fake Chrome) |
+| contract    | `test/contract/`      | the same `GroceryStore` contract on the simulator and on every adapter (sites simulated by the fixtures)                                                |
+| integration | `test/integration/`   | real MCP client: simulated retailers, real adapters on simulated sites, stdio subprocess                                                                |
+| live        | `test/live/` (not CI) | real sites, the user's cart left intact; `npm run doctor` read-only                                                                                     |
 
-CI requires 90% line and 85% branch coverage. Excluded from coverage: the Chrome connection
-(`infrastructure/browser`, covered by the live tests and the doctor) and `main.ts` (covered by the stdio test).
+CI requires 90% line and 85% branch coverage. Only `main.ts` is excluded from coverage (covered by the stdio test).
+The Chrome connection (`infrastructure/browser`) is unit-tested against a fake Chrome speaking CDP
+(`test/support/fake-chrome.ts`), and still exercised against real Chrome by the doctor and the live tests.
