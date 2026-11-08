@@ -9,8 +9,8 @@
   },
   "description": "Multi-retailer MCP server (Super U, E.Leclerc Drive): search, product pages, cart, slots and comparison for an agent (never places the order)",
   "devDependencies": {
-    "@biomejs/biome": "2.6.3",
-    "@types/node": "26.6.5",
+    "@biomejs/biome": "2.6.4",
+    "@types/node": "26.6.6",
     "typescript": "7.0.2"
   },
   "engines": {
