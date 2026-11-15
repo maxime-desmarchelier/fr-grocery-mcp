@@ -4,7 +4,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
-    "linkedom": "0.18.14",
+    "linkedom": "0.18.15",
     "zod": "4.6.7"
   },
   "description": "Multi-retailer MCP server (Super U, E.Leclerc Drive): search, product pages, cart, slots and comparison for an agent (never places the order)",
